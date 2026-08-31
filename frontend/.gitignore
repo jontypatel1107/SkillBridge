@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets — DO NOT COMMIT
+.env
+.env.local
+.env.*.local
+
+# Expo
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Source code (pushed as structure-only; keep folder placeholders)
+**/*.ts
+**/*.tsx
+
+# Build output
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

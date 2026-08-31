@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "SkillBridge",
+    "slug": "skillbridge",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "skillbridge",
+    "assetBundlePatterns": ["**/*"],
+    "ios": { "supportsTablet": false, "bundleIdentifier": "com.skillbridge.app" },
+    "android": {
+      "package": "com.skillbridge.app",
+      "adaptiveIcon": { "backgroundColor": "#4F46E5" }
+    },
+    "plugins": ["expo-secure-store", "@react-native-community/datetimepicker"]
+  }
+}
