@@ -111,19 +111,23 @@ export async function recommendMentors(req: AuthedRequest, res: Response) {
 
   const interestTags = [...(user.skills ?? []), ...(user.interests ?? [])];
 
+  // Always include all active mentors so the section is never empty.
+  // Mentors sharing the learner's skills/interests are ranked higher via
+  // overlapCount, rather than excluding everyone who doesn't match.
   const matchStage: Record<string, unknown> = { role: "mentor", isSuspended: false };
-  if (interestTags.length > 0) {
-    matchStage.skills = { $in: interestTags };
-  }
 
-  // Ranked by a mix of shared-interest overlap and rating — no LLM needed
-  // for this one, it's a straightforward scored query.
+  // When there are no interests, use a sentinel so every mentor gets an
+  // overlapCount of 0 and sorting falls back to rating.
+  const overlapSource = interestTags.length > 0 ? interestTags : ["__SKILLBRIDGE_NO_MATCH__"];
+
   const mentors = await User.aggregate([
     { $match: matchStage },
     {
       $addFields: {
         overlapCount: {
-          $size: { $ifNull: [{ $setIntersection: ["$skills", interestTags] }, []] },
+          $size: {
+            $setIntersection: [{ $ifNull: ["$skills", []] }, overlapSource],
+          },
         },
       },
     },
