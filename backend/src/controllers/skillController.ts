@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Types } from "mongoose";
 import { Skill } from "../models/Skill";
+import { User } from "../models/User";
 import { ApiError, ok } from "../utils/apiResponse";
 import { AuthedRequest } from "../middleware/auth";
 import { CreateSkillInput, UpdateSkillInput, SearchSkillsQuery } from "../validators/skillValidators";
@@ -29,7 +30,23 @@ export async function searchSkills(req: Request, res: Response) {
     };
   }
   if (q) {
-    filter.$text = { $search: q };
+    // Resolve mentors whose name matches the query so searching someone by
+    // name can find their published listings too (search spans collections).
+    const mentorIds = await User.find({
+      role: "mentor",
+      name: { $regex: q, $options: "i" },
+    }).distinct("_id");
+
+    const searchOr: Record<string, unknown>[] = [
+      { title: { $regex: q, $options: "i" } },
+      { tags: { $regex: q, $options: "i" } },
+      { category: { $regex: q, $options: "i" } },
+    ];
+    if (mentorIds.length > 0) {
+      searchOr.push({ mentor: { $in: mentorIds } });
+    }
+
+    filter.$or = searchOr;
   }
 
   const sortMap: Record<SearchSkillsQuery["sort"], Record<string, 1 | -1>> = {
