@@ -44,6 +44,15 @@ export function SkillDetailScreen({ route, navigation }: Props) {
   const grad = categoryGradients[skill.category] ?? categoryGradients.development;
   const priceLabel = "$" + skill.hourlyPrice + "/hr";
 
+  const openChat = () => {
+    if (!mentor) return;
+    const mentorId = mentor.id ?? mentor._id;
+    navigation.getParent()?.navigate("ChatTab", {
+      screen: "Conversation",
+      params: { userId: mentorId, userName: mentor.name },
+    });
+  };
+
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -204,11 +213,11 @@ export function SkillDetailScreen({ route, navigation }: Props) {
           <Text style={[typography.caption, { color: colors.textMuted }]}>Starting from</Text>
           <Text style={[typography.h3, { color: colors.primary }]}>{priceLabel}</Text>
         </View>
-        <View style={{ flex: 1 }}>
-          <Button
-            label="Book Session"
-            onPress={() => navigation.navigate("BookSession", { skillId })}
-          />
+        <View style={styles.footerButtons}>
+          <Button label="Message" variant="secondary" onPress={openChat} />
+          <View style={{ flex: 1 }}>
+            <Button label="Book Session" onPress={() => navigation.navigate("BookSession", { skillId })} />
+          </View>
         </View>
       </View>
     </View>
@@ -352,5 +361,11 @@ const styles = StyleSheet.create({
   },
   footerLeft: {
     minWidth: 80,
+  },
+  footerButtons: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
 });
