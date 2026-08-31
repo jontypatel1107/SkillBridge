@@ -14,6 +14,30 @@ function issueTokens(userId: string, role: string) {
   return { accessToken, refreshToken };
 }
 
+function toUserResponse(user: any) {
+  return {
+    id: user._id,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    avatarUrl: user.avatarUrl,
+    bio: user.bio,
+    location: user.location,
+    skills: user.skills ?? [],
+    interests: user.interests ?? [],
+    languages: user.languages ?? [],
+    isVerified: user.isVerified,
+    isMentorApproved: user.isMentorApproved,
+    rating: user.rating,
+    ratingCount: user.ratingCount,
+    links: user.links,
+    hourlyPrice: user.hourlyPrice,
+    availability: user.availability,
+    createdAt: user.createdAt,
+  };
+}
+
 export async function register(req: Request, res: Response) {
   const { name, username, email, password, role } = req.body as RegisterInput;
 
@@ -31,13 +55,7 @@ export async function register(req: Request, res: Response) {
   return ok(
     res,
     {
-      user: {
-        id: user._id,
-        name: user.name,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      },
+      user: toUserResponse(user),
       accessToken,
       refreshToken,
     },
@@ -66,13 +84,7 @@ export async function login(req: Request, res: Response) {
   await user.save();
 
   return ok(res, {
-    user: {
-      id: user._id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-    },
+    user: toUserResponse(user),
     accessToken,
     refreshToken,
   });
