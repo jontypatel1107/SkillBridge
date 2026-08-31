@@ -16,10 +16,6 @@ web-build/
 *.key
 *.mobileprovision
 
-# Source code (pushed as structure-only; keep folder placeholders)
-**/*.ts
-**/*.tsx
-
 # Build output
 build/
 

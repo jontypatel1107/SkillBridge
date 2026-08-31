@@ -6,9 +6,6 @@ node_modules/
 .env.local
 .env.*.local
 
-# Source code (pushed as structure-only; keep folder placeholders)
-**/*.ts
-
 # Build output
 dist/
 build/
