@@ -15,8 +15,9 @@ import { Avatar } from "@/components/Avatar";
 import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
 import { SkeletonCard } from "@/components/Skeleton";
-import { useConversationsQuery } from "@/redux/api/chatApi";
+import { chatApi, useConversationsQuery } from "@/redux/api/chatApi";
 import { connectSocket } from "@/services/socket";
+import { useAppDispatch } from "@/hooks/redux";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { ChatStackParamList } from "@/navigation/types";
 
@@ -36,17 +37,36 @@ function timeAgo(dateStr: string): string {
 
 export function ChatListScreen({ navigation }: Props) {
   const { colors } = useTheme();
-  const { data: conversations, isLoading, refetch } = useConversationsQuery();
+  const dispatch = useAppDispatch();
+  const { data: conversations, isLoading, refetch } = useConversationsQuery(undefined, {
+    pollingInterval: 15000,
+  });
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
+    let isActive = true;
+
     connectSocket().then((socket) => {
-      const onNewMessage = () => refetch();
+      if (!isActive) return;
+
+      const onNewMessage = () => {
+        dispatch(chatApi.util.invalidateTags(["Chat"]));
+        refetch();
+      };
       socket.on("message:new", onNewMessage);
-      cleanup = () => socket.off("message:new", onNewMessage);
+      socket.on("message:read", onNewMessage);
+      socket.on("connect", refetch);
+      cleanup = () => {
+        socket.off("message:new", onNewMessage);
+        socket.off("message:read", onNewMessage);
+        socket.off("connect", refetch);
+      };
     });
-    return () => cleanup?.();
-  }, [refetch]);
+    return () => {
+      isActive = false;
+      cleanup?.();
+    };
+  }, [dispatch, refetch]);
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>

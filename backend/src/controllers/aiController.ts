@@ -114,7 +114,11 @@ export async function recommendMentors(req: AuthedRequest, res: Response) {
   // Always include all active mentors so the section is never empty.
   // Mentors sharing the learner's skills/interests are ranked higher via
   // overlapCount, rather than excluding everyone who doesn't match.
-  const matchStage: Record<string, unknown> = { role: "mentor", isSuspended: false };
+  const matchStage: Record<string, unknown> = {
+    _id: { $ne: new Types.ObjectId(req.user!.id) },
+    role: "mentor",
+    isSuspended: false,
+  };
 
   // When there are no interests, use a sentinel so every mentor gets an
   // overlapCount of 0 and sorting falls back to rating.

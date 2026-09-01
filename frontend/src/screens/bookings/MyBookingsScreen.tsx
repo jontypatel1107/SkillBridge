@@ -26,13 +26,15 @@ const FILTERS: { label: string; value: BookingStatus | "all"; icon: string }[] =
   { label: "Pending", value: "pending", icon: "clock" },
   { label: "Confirmed", value: "confirmed", icon: "check-circle" },
   { label: "Completed", value: "completed", icon: "award" },
+  { label: "Expired", value: "expired", icon: "alert-circle" },
 ];
 
 export function MyBookingsScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const [filter, setFilter] = useState<BookingStatus | "all">("all");
   const { data: bookings, isLoading } = useMyBookingsQuery(
-    filter === "all" ? undefined : { status: filter }
+    filter === "all" ? undefined : { status: filter },
+    { pollingInterval: 60000 }
   );
 
   return (

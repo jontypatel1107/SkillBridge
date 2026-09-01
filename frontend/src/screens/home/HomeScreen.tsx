@@ -55,7 +55,10 @@ export function HomeScreen({ navigation }: Props) {
 
   const skills = useMemo(() => data?.skills ?? [], [data]);
 
-  const mentors = useMemo(() => recommended ?? [], [recommended]);
+  const mentors = useMemo(() => {
+    const currentUserId = user?.id ?? user?._id;
+    return (recommended ?? []).filter((mentor) => (mentor.id ?? mentor._id) !== currentUserId);
+  }, [recommended, user]);
   const suggestedSkills = useMemo(() => suggested ?? [], [suggested]);
 
   return (

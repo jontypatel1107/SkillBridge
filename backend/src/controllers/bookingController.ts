@@ -17,7 +17,30 @@ const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   confirmed: ["completed", "cancelled"],
   completed: [],
   cancelled: [],
+  expired: ["completed", "cancelled"],
 };
+
+function buildMeetingUrl(bookingId: Types.ObjectId | string): string {
+  return `https://meet.jit.si/skillbridge-${bookingId.toString()}`;
+}
+
+async function expireStaleConfirmedBookings(userId?: string) {
+  const filter: Record<string, unknown> = {
+    status: "confirmed",
+    $expr: {
+      $lt: [
+        { $add: ["$scheduledAt", { $multiply: ["$durationMinutes", 60 * 1000] }] },
+        new Date(),
+      ],
+    },
+  };
+
+  if (userId) {
+    filter.$or = [{ learner: userId }, { mentor: userId }];
+  }
+
+  await Booking.updateMany(filter, { status: "expired" });
+}
 
 export async function createBooking(req: AuthedRequest, res: Response) {
   const { skillId, mode, scheduledAt, durationMinutes } = req.body as CreateBookingInput;
@@ -41,6 +64,11 @@ export async function createBooking(req: AuthedRequest, res: Response) {
     status: "pending",
   });
 
+  if (mode === "online") {
+    booking.meetingUrl = buildMeetingUrl(booking._id);
+    await booking.save();
+  }
+
   await notify({
     recipient: skill.mentor,
     type: "booking_requested",
@@ -53,6 +81,8 @@ export async function createBooking(req: AuthedRequest, res: Response) {
 }
 
 export async function listMyBookings(req: AuthedRequest, res: Response) {
+  await expireStaleConfirmedBookings(req.user!.id);
+
   const query = (req as AuthedRequest & { validatedQuery: ListBookingsQuery }).validatedQuery;
   const { status, page, limit } = query;
 
@@ -81,6 +111,8 @@ export async function listMyBookings(req: AuthedRequest, res: Response) {
 }
 
 export async function getBooking(req: AuthedRequest, res: Response) {
+  await expireStaleConfirmedBookings(req.user!.id);
+
   if (!Types.ObjectId.isValid(req.params.id)) {
     throw new ApiError(400, "Invalid booking id");
   }
@@ -105,6 +137,8 @@ export async function getBooking(req: AuthedRequest, res: Response) {
 }
 
 export async function updateBookingStatus(req: AuthedRequest, res: Response) {
+  await expireStaleConfirmedBookings(req.user!.id);
+
   if (!Types.ObjectId.isValid(req.params.id)) {
     throw new ApiError(400, "Invalid booking id");
   }

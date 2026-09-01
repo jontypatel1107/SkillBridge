@@ -12,6 +12,7 @@ export function StatusBadge({ status }: { status: BookingStatus }) {
     confirmed: { bg: colors.primaryMuted, fg: colors.primary, label: "Confirmed" },
     completed: { bg: colors.success + "22", fg: colors.success, label: "Completed" },
     cancelled: { bg: colors.danger + "22", fg: colors.danger, label: "Cancelled" },
+    expired: { bg: colors.textMuted + "22", fg: colors.textMuted, label: "Expired" },
   };
 
   const { bg, fg, label } = config[status];

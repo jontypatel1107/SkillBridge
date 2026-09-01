@@ -20,15 +20,18 @@ export interface Conversation {
 }
 
 export const chatApi = api.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     conversations: builder.query<Conversation[], void>({
       query: () => "/chat/conversations",
       transformResponse: (res: ApiSuccess<{ conversations: Conversation[] }>) =>
         res.data.conversations,
+      providesTags: ["Chat"],
     }),
     conversationHistory: builder.query<ChatMessage[], string>({
       query: (userId) => `/chat/conversations/${userId}`,
       transformResponse: (res: ApiSuccess<{ messages: ChatMessage[] }>) => res.data.messages,
+      providesTags: (result, error, userId) => [{ type: "Chat", id: userId }],
     }),
   }),
 });

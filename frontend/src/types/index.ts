@@ -57,7 +57,7 @@ export interface Skill {
   createdAt: string;
 }
 
-export type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
+export type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled" | "expired";
 
 export interface Booking {
   _id: string;
@@ -68,4 +68,5 @@ export interface Booking {
   scheduledAt: string;
   durationMinutes: number;
   status: BookingStatus;
+  meetingUrl?: string;
 }

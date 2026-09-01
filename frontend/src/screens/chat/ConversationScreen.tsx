@@ -13,9 +13,9 @@ import { Feather } from "@expo/vector-icons";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
-import { useConversationHistoryQuery, ChatMessage } from "@/redux/api/chatApi";
+import { chatApi, useConversationHistoryQuery, ChatMessage } from "@/redux/api/chatApi";
 import { connectSocket } from "@/services/socket";
-import { useAppSelector } from "@/hooks/redux";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { ChatStackParamList } from "@/navigation/types";
 
@@ -28,13 +28,21 @@ function formatTime(dateStr: string): string {
   });
 }
 
+function appendMessageOnce(messages: ChatMessage[], message: ChatMessage): ChatMessage[] {
+  if (messages.some((existing) => existing._id === message._id)) return messages;
+  return [...messages, message];
+}
+
 export function ConversationScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
   const { userId, userName } = route.params;
+  const dispatch = useAppDispatch();
   const currentUser = useAppSelector((s) => s.auth.user);
   const meId = currentUser?.id ?? currentUser?._id ?? "";
 
-  const { data: history } = useConversationHistoryQuery(userId);
+  const { data: history, refetch } = useConversationHistoryQuery(userId, {
+    pollingInterval: 10000,
+  });
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -50,11 +58,23 @@ export function ConversationScreen({ route, navigation }: Props) {
 
   useEffect(() => {
     let cleanupFns: (() => void)[] = [];
+    let isActive = true;
 
     connectSocket().then((socket) => {
+      if (!isActive) return;
+
       const onNewMessage = (msg: ChatMessage) => {
         if (msg.sender === userId || msg.recipient === userId) {
-          setMessages((prev) => [...prev, msg]);
+          dispatch(
+            chatApi.util.updateQueryData("conversationHistory", userId, (draft) => {
+              if (!draft.some((existing) => existing._id === msg._id)) {
+                draft.push(msg);
+              }
+            })
+          );
+          dispatch(chatApi.util.invalidateTags(["Chat"]));
+          setMessages((prev) => appendMessageOnce(prev, msg));
+          socket.emit("message:read", { otherUserId: userId });
         }
       };
       const onTypingStart = ({ userId: fromId }: { userId: string }) => {
@@ -67,17 +87,22 @@ export function ConversationScreen({ route, navigation }: Props) {
       socket.on("message:new", onNewMessage);
       socket.on("typing:start", onTypingStart);
       socket.on("typing:stop", onTypingStop);
+      socket.on("connect", refetch);
       socket.emit("message:read", { otherUserId: userId });
 
       cleanupFns = [
         () => socket.off("message:new", onNewMessage),
         () => socket.off("typing:start", onTypingStart),
         () => socket.off("typing:stop", onTypingStop),
+        () => socket.off("connect", refetch),
       ];
     });
 
-    return () => cleanupFns.forEach((fn) => fn());
-  }, [userId]);
+    return () => {
+      isActive = false;
+      cleanupFns.forEach((fn) => fn());
+    };
+  }, [dispatch, refetch, userId]);
 
   const send = useCallback(async () => {
     const text = draft.trim();
@@ -85,6 +110,7 @@ export function ConversationScreen({ route, navigation }: Props) {
     setDraft("");
     const socket = await connectSocket();
     socket.emit("message:send", { recipientId: userId, text });
+    socket.emit("typing:stop", { recipientId: userId });
   }, [draft, userId]);
 
   const onChangeDraft = async (text: string) => {

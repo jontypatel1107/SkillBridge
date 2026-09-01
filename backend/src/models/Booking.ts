@@ -1,6 +1,6 @@
 import { Schema, model, Document, Types } from "mongoose";
 
-export type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
+export type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled" | "expired";
 export type BookingMode = "online" | "offline";
 
 export interface IBooking extends Document {
@@ -11,6 +11,7 @@ export interface IBooking extends Document {
   scheduledAt: Date;
   durationMinutes: number;
   status: BookingStatus;
+  meetingUrl?: string;
   cancelReason?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -26,9 +27,10 @@ const bookingSchema = new Schema<IBooking>(
     durationMinutes: { type: Number, required: true, min: 15, default: 60 },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "completed", "cancelled"],
+      enum: ["pending", "confirmed", "completed", "cancelled", "expired"],
       default: "pending",
     },
+    meetingUrl: { type: String },
     cancelReason: { type: String, maxlength: 300 },
   },
   { timestamps: true }

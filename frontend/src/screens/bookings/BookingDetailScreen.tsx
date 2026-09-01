@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
+  Linking,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -28,7 +29,9 @@ export function BookingDetailScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
   const { bookingId } = route.params;
   const currentUser = useAppSelector((s) => s.auth.user);
-  const { data: booking, isLoading } = useGetBookingQuery(bookingId);
+  const { data: booking, isLoading } = useGetBookingQuery(bookingId, {
+    pollingInterval: 60000,
+  });
   const [updateStatus, { isLoading: isUpdating }] = useUpdateBookingStatusMutation();
 
   if (isLoading || !booking) {
@@ -49,6 +52,25 @@ export function BookingDetailScreen({ route, navigation }: Props) {
     updateStatus({ id: booking._id, status });
 
   const scheduledDate = new Date(booking.scheduledAt);
+  const sessionStart = scheduledDate.getTime();
+  const sessionEnd = sessionStart + booking.durationMinutes * 60 * 1000;
+  const joinOpensAt = sessionStart - 15 * 60 * 1000;
+  const now = Date.now();
+  const meetingUrl =
+    booking.mode === "online"
+      ? booking.meetingUrl ?? `https://meet.jit.si/skillbridge-${booking._id}`
+      : undefined;
+  const canJoinMeeting =
+    booking.status === "confirmed" &&
+    booking.mode === "online" &&
+    !!meetingUrl &&
+    now >= joinOpensAt &&
+    now <= sessionEnd;
+  const meetingPending =
+    booking.status === "confirmed" &&
+    booking.mode === "online" &&
+    !!meetingUrl &&
+    now < joinOpensAt;
 
   return (
     <ScrollView
@@ -105,11 +127,39 @@ export function BookingDetailScreen({ route, navigation }: Props) {
 
       {/* Actions */}
       <Animated.View entering={FadeInDown.delay(200).duration(400)} style={{ marginTop: spacing.xl }}>
+        {canJoinMeeting ? (
+          <Button
+            label="Join Online Meeting"
+            onPress={() => Linking.openURL(meetingUrl!)}
+          />
+        ) : null}
+        {meetingPending ? (
+          <View style={[styles.notice, { backgroundColor: colors.primaryMuted }]}>
+            <Feather name="video" size={16} color={colors.primary} />
+            <Text style={[typography.caption, { color: colors.primary, flex: 1 }]}>
+              Meeting opens 15 minutes before the start time.
+            </Text>
+          </View>
+        ) : null}
+        {booking.status === "expired" ? (
+          <View style={[styles.notice, { backgroundColor: colors.textMuted + "18" }]}>
+            <Feather name="alert-circle" size={16} color={colors.textMuted} />
+            <Text style={[typography.caption, { color: colors.textMuted, flex: 1 }]}>
+              This meeting time has passed.
+            </Text>
+          </View>
+        ) : null}
         {isMentor && booking.status === "pending" ? (
           <Button label="Confirm Booking" onPress={() => act("confirmed")} loading={isUpdating} />
         ) : null}
-        {isMentor && booking.status === "confirmed" ? (
-          <Button label="Mark as Completed" onPress={() => act("completed")} loading={isUpdating} />
+        {isMentor && (booking.status === "confirmed" || booking.status === "expired") ? (
+          <Button
+            label="Mark as Completed"
+            onPress={() => act("completed")}
+            loading={isUpdating}
+            variant={canJoinMeeting ? "outline" : "primary"}
+            style={canJoinMeeting ? { marginTop: spacing.sm } : undefined}
+          />
         ) : null}
         {(booking.status === "pending" || booking.status === "confirmed") ? (
           <Button
@@ -181,5 +231,13 @@ const styles = StyleSheet.create({
   participantRow: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  notice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
 });
