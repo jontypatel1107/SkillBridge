@@ -6,6 +6,7 @@ interface CreateBookingBody {
   mode: "online" | "offline";
   scheduledAt: string;
   durationMinutes?: number;
+  location?: { lng: number; lat: number; label?: string };
 }
 
 export const bookingsApi = api.injectEndpoints({

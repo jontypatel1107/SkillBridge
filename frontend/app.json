@@ -12,6 +12,15 @@
       "package": "com.skillbridge.app",
       "adaptiveIcon": { "backgroundColor": "#4F46E5" }
     },
-    "plugins": ["expo-secure-store", "@react-native-community/datetimepicker"]
+    "plugins": [
+      "expo-secure-store",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SkillBridge uses your photos to set your profile picture."
+        }
+      ]
+    ]
   }
 }

@@ -1,5 +1,5 @@
 import { api } from "./baseApi";
-import { ApiSuccess, Skill, SkillCategory } from "@/types";
+import { ApiSuccess, Skill, SkillCategory, User } from "@/types";
 
 interface SearchSkillsParams {
   q?: string;
@@ -12,6 +12,7 @@ interface SearchSkillsParams {
 
 interface SkillsPage {
   skills: Skill[];
+  mentors?: User[];
   pagination: { page: number; totalPages: number; total: number };
 }
 

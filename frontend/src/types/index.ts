@@ -1,5 +1,18 @@
 export type UserRole = "student" | "mentor" | "admin";
 
+export interface MapLocation {
+  longitude: number;
+  latitude: number;
+  label?: string;
+}
+
+export interface GeoPoint {
+  type: "Point";
+  coordinates: [number, number]; // [lng, lat]
+  label?: string;
+  city?: string;
+}
+
 export interface User {
   id: string;
   _id?: string;
@@ -12,9 +25,19 @@ export interface User {
   skills?: string[];
   interests?: string[];
   languages?: string[];
+  location?: GeoPoint;
+  distanceKm?: number;
   rating?: number;
   ratingCount?: number;
   isVerified?: boolean;
+  xp?: number;
+  level?: number;
+  streak?: {
+    current: number;
+    longest: number;
+    lastActiveDate: string | null;
+  };
+  badges?: { code: string; name: string; description: string }[];
 }
 
 export interface AuthResponse {
@@ -69,4 +92,5 @@ export interface Booking {
   durationMinutes: number;
   status: BookingStatus;
   meetingUrl?: string;
+  location?: GeoPoint;
 }

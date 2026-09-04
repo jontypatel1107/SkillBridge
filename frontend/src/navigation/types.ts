@@ -1,3 +1,5 @@
+import type { User } from "@/types";
+
 export type AuthStackParamList = {
   Login: undefined;
   Signup: undefined;
@@ -11,6 +13,7 @@ export type HomeStackParamList = {
   SkillDetail: { skillId: string };
   BookSession: { skillId: string };
   BookingSuccess: { bookingId: string };
+  MentorDetail: { username: string; mentor: User };
 };
 
 export type ExploreStackParamList = {
@@ -18,6 +21,7 @@ export type ExploreStackParamList = {
   SkillDetail: { skillId: string };
   BookSession: { skillId: string };
   BookingSuccess: { bookingId: string };
+  MentorDetail: { username: string; mentor: User };
 };
 
 export type BookingsStackParamList = {
@@ -29,6 +33,7 @@ export type BookingsStackParamList = {
 export type ChatStackParamList = {
   ChatList: undefined;
   Conversation: { userId: string; userName: string };
+  VideoCall: { userId: string; userName: string };
 };
 
 export type ProfileStackParamList = {
@@ -39,6 +44,7 @@ export type ProfileStackParamList = {
   CreateSkill: undefined;
   EditSkill: { skillId: string };
   Roadmaps: undefined;
+  Leaderboard: undefined;
   Notifications: undefined;
 };
 
@@ -53,4 +59,8 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
+  MapPicker: {
+    initial?: { latitude: number; longitude: number };
+    title?: string;
+  };
 };
