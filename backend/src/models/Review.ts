@@ -12,7 +12,7 @@ export interface IReview extends Document {
 
 const reviewSchema = new Schema<IReview>(
   {
-    booking: { type: Schema.Types.ObjectId, ref: "Booking", required: true, unique: true },
+    booking: { type: Schema.Types.ObjectId, ref: "Booking", required: true },
     reviewer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     mentor: { type: Schema.Types.ObjectId, ref: "User", required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
