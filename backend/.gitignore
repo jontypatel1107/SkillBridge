@@ -10,6 +10,9 @@ node_modules/
 dist/
 build/
 
+# User uploads (avatars)
+public/avatars/
+
 # Logs
 *.log
 npm-debug.log*

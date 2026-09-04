@@ -1,11 +1,20 @@
 import { Response } from "express";
 import { Types } from "mongoose";
+import { promises as fs } from "fs";
+import path from "path";
 import { User } from "../models/User";
+import { Skill } from "../models/Skill";
 import { ApiError, ok } from "../utils/apiResponse";
 import { AuthedRequest } from "../middleware/auth";
-import { UpdateProfileInput, NearbyQuery, LeaderboardQuery } from "../validators/userValidators";
+import {
+  UpdateProfileInput,
+  NearbyQuery,
+  LeaderboardQuery,
+  AvatarUploadInput,
+} from "../validators/userValidators";
 import { notify } from "../services/notificationService";
 import { onFollowerGained, getGamificationSummary, levelTitle } from "../services/gamificationService";
+import { toPublicLocation, toPublicUser } from "../utils/publicUser";
 
 export async function updateProfile(req: AuthedRequest, res: Response) {
   const input = req.body as UpdateProfileInput;
@@ -43,7 +52,12 @@ export async function getPublicProfile(req: AuthedRequest, res: Response) {
     throw new ApiError(404, "User not found");
   }
 
-  return ok(res, { user });
+  const listings =
+    user.role === "mentor"
+      ? await Skill.find({ mentor: user._id, isActive: true }).sort({ createdAt: -1 })
+      : [];
+
+  return ok(res, { user: toPublicUser(user), listings });
 }
 
 export async function followUser(req: AuthedRequest, res: Response) {
@@ -103,20 +117,47 @@ export async function nearbyMentors(req: AuthedRequest, res: Response) {
   const query = (req as AuthedRequest & { validatedQuery: NearbyQuery }).validatedQuery;
   const { lng, lat, radiusKm, limit } = query;
 
-  const mentors = await User.find({
-    role: "mentor",
-    isSuspended: false,
-    location: {
-      $near: {
-        $geometry: { type: "Point", coordinates: [lng, lat] },
-        $maxDistance: radiusKm * 1000,
+  const docs = await User.aggregate([
+    {
+      $geoNear: {
+        near: { type: "Point", coordinates: [lng, lat] },
+        distanceField: "distanceMeters",
+        maxDistance: radiusKm * 1000,
+        spherical: true,
+        query: {
+          role: "mentor",
+          isSuspended: false,
+          location: { $exists: true, $ne: null },
+        },
       },
     },
-  })
-    .select("name username avatarUrl bio skills rating ratingCount location")
-    .limit(limit);
+    { $limit: limit },
+    {
+      $project: {
+        name: 1,
+        username: 1,
+        avatarUrl: 1,
+        bio: 1,
+        skills: 1,
+        rating: 1,
+        ratingCount: 1,
+        level: 1,
+        xp: 1,
+        distanceKm: { $round: [{ $divide: ["$distanceMeters", 1000] }, 1] },
+        locationCity: "$location.city",
+      },
+    },
+  ]);
 
-  return ok(res, { mentors });
+  const mentors = docs.map((doc) =>
+    toPublicUser({
+      ...doc,
+      location: { city: doc.locationCity },
+      id: doc._id.toString(),
+    })
+  );
+
+  return ok(res, { mentors, center: { lng, lat } });
 }
 
 export async function myGamification(req: AuthedRequest, res: Response) {
@@ -144,4 +185,28 @@ export async function leaderboard(req: AuthedRequest, res: Response) {
     levelTitle: levelTitle(user.level ?? 1),
   }));
   return ok(res, { leaderboard });
+}
+
+export async function uploadAvatar(req: AuthedRequest, res: Response) {
+  const { dataUrl } = req.body as AvatarUploadInput;
+
+  const match = /^data:image\/(jpeg|png|webp|gif|heic);base64,(.+)$/.exec(dataUrl)!;
+  const ext = match[1] === "jpeg" ? "jpg" : match[1];
+  const buffer = Buffer.from(match[2], "base64");
+
+  const dir = path.join(process.cwd(), "public", "avatars");
+  await fs.mkdir(dir, { recursive: true });
+
+  const filename = `${req.user!.id}-${Date.now()}.${ext}`;
+  await fs.writeFile(path.join(dir, filename), buffer);
+
+  const host = req.get("host") ?? "localhost:5000";
+  const avatarUrl = `${req.protocol}://${host}/avatars/${filename}`;
+
+  const user = await User.findByIdAndUpdate(req.user!.id, { avatarUrl }, { new: true, runValidators: true });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return ok(res, { user });
 }

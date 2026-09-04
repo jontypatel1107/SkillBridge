@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import path from "path";
 import mongoSanitize from "express-mongo-sanitize";
 import { env } from "./config/env";
 import routes from "./routes";
@@ -15,6 +16,8 @@ app.use(cors({ origin: env.clientOrigin, credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(mongoSanitize());
 app.use(morgan(env.nodeEnv === "development" ? "dev" : "combined"));
+
+app.use("/avatars", express.static(path.join(process.cwd(), "public", "avatars")));
 
 app.use("/api", routes);
 
