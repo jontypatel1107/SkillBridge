@@ -1,8 +1,10 @@
 import React from "react";
 import { View, StyleSheet, ViewStyle } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/theme/ThemeProvider";
 import { radii, spacing } from "@/theme/tokens";
 import { getShadow, ShadowPreset } from "@/theme/shadows";
+import { gradients } from "@/theme/gradients";
 
 interface CardProps {
   children: React.ReactNode;
@@ -15,7 +17,10 @@ export const Card = React.memo(function Card({ children, style, shadow = "sm", p
   const { colors } = useTheme();
 
   return (
-    <View
+    <LinearGradient
+      colors={[colors.surface, colors.surfaceMuted] as any}
+      start={gradients.primarySoft.start}
+      end={gradients.primarySoft.end}
       style={[
         styles.card,
         getShadow(colors, shadow),
@@ -28,7 +33,7 @@ export const Card = React.memo(function Card({ children, style, shadow = "sm", p
       ]}
     >
       {children}
-    </View>
+    </LinearGradient>
   );
 });
 

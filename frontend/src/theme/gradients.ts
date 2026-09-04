@@ -6,17 +6,17 @@ export interface GradientStop {
 
 export const gradients = {
   primary: {
-    colors: ["#4F46E5", "#7C3AED"],
+    colors: ["#2563EB", "#06B6D4"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   primarySoft: {
-    colors: ["#4F46E5", "#818CF8"],
+    colors: ["#3B82F6", "#93C5FD"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   accent: {
-    colors: ["#7C3AED", "#A78BFA"],
+    colors: ["#F43F5E", "#F59E0B"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
@@ -41,35 +41,35 @@ export const gradients = {
     end: { x: 1, y: 1 },
   },
   hero: {
-    colors: ["#4F46E5", "#7C3AED", "#06B6D4"],
+    colors: ["#0F172A", "#2563EB", "#06B6D4", "#F43F5E"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   dark: {
-    colors: ["#1E1B4B", "#312E81"],
+    colors: ["#080B12", "#172033"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   shimmer: {
-    colors: ["#E7E6F0", "#F2F1FA", "#E7E6F0"],
+    colors: ["#DDE5F3", "#ECF2FF", "#DDE5F3"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 0 },
   },
   shimmerDark: {
-    colors: ["#2A2840", "#211F33", "#2A2840"],
+    colors: ["#263348", "#172033", "#263348"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 0 },
   },
 } as const;
 
 export const categoryGradients: Record<string, { colors: string[] }> = {
-  development: { colors: ["#4F46E5", "#818CF8"] },
-  ai: { colors: ["#7C3AED", "#A78BFA"] },
-  music: { colors: ["#EC4899", "#F472B6"] },
-  fitness: { colors: ["#16A34A", "#4ADE80"] },
-  design: { colors: ["#F59E0B", "#FBBF24"] },
-  business: { colors: ["#06B6D4", "#22D3EE"] },
-  photography: { colors: ["#EF4444", "#F87171"] },
+  development: { colors: ["#2563EB", "#22D3EE"] },
+  ai: { colors: ["#7C3AED", "#06B6D4"] },
+  music: { colors: ["#F43F5E", "#FB7185"] },
+  fitness: { colors: ["#059669", "#34D399"] },
+  design: { colors: ["#F59E0B", "#F97316"] },
+  business: { colors: ["#0891B2", "#60A5FA"] },
+  photography: { colors: ["#E11D48", "#F59E0B"] },
   cooking: { colors: ["#F97316", "#FB923C"] },
   languages: { colors: ["#3B82F6", "#60A5FA"] },
 };

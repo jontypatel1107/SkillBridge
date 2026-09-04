@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/theme/ThemeProvider";
 import { radii, typography, spacing } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
+import { gradients } from "@/theme/gradients";
 import { hapticLight } from "@/utils/haptics";
 
 interface ButtonProps {
@@ -54,9 +55,9 @@ export function Button({
         ]}
       >
         <LinearGradient
-          colors={["#4F46E5", "#7C3AED"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+          colors={gradients.primary.colors as any}
+          start={gradients.primary.start}
+          end={gradients.primary.end}
           style={styles.gradient}
         >
           {loading ? (
@@ -113,12 +114,13 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    height: 52,
-    borderRadius: radii.md,
+    minHeight: 58,
+    borderRadius: radii.lg,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
     gap: spacing.sm,
   },
   gradient: {
@@ -126,15 +128,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
     gap: spacing.sm,
   },
   primaryLabel: {
     ...typography.bodyMedium,
     color: "#FFFFFF",
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 0.2,
   },
   label: {
     ...typography.bodyMedium,
+    fontWeight: "600",
   },
 });

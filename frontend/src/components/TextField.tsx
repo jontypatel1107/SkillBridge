@@ -5,11 +5,12 @@ import { radii, spacing, typography } from "@/theme/tokens";
 
 interface TextFieldProps extends TextInputProps {
   label?: string;
-  error?: string;
+  error?: string | string[];
 }
 
 export function TextField({ label, error, style, ...rest }: TextFieldProps) {
   const { colors } = useTheme();
+  const errorText = Array.isArray(error) ? error[0] : error;
 
   return (
     <View style={styles.container}>
@@ -27,7 +28,7 @@ export function TextField({ label, error, style, ...rest }: TextFieldProps) {
         ]}
         {...rest}
       />
-      {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+      {errorText ? <Text style={[styles.error, { color: colors.danger }]}>{errorText}</Text> : null}
     </View>
   );
 }

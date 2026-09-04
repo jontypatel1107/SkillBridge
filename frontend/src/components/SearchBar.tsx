@@ -54,10 +54,16 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    height: 48,
-    borderRadius: radii.md,
+    minHeight: 52,
+    borderRadius: radii.lg,
     borderWidth: 1,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   icon: {
     marginRight: spacing.sm,

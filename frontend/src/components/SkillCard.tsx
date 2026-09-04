@@ -32,7 +32,7 @@ export const SkillCard = React.memo(function SkillCard({ title, category, price,
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${category}, $${price} per hour${mentorName ? `, by ${mentorName}` : ""}`}
     >
-      <View style={[styles.card, getShadow(colors, "sm"), { backgroundColor: colors.surface }]}>
+      <View style={[styles.card, getShadow(colors, "card"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <LinearGradient
           colors={grad.colors as any}
           start={{ x: 0, y: 0 }}
@@ -63,10 +63,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "transparent",
   },
   gradientHeader: {
-    height: 64,
+    height: 72,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     flexDirection: "row",

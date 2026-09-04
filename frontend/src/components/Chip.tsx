@@ -51,9 +51,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     borderWidth: 1,
     gap: spacing.xs,
+    minHeight: 38,
   },
   label: {
     ...typography.caption,
     textTransform: "capitalize",
+    fontWeight: "700",
+    letterSpacing: 0.15,
   },
 });
