@@ -29,14 +29,25 @@ export async function searchSkills(req: Request, res: Response) {
       ...(maxPrice !== undefined ? { $lte: maxPrice } : {}),
     };
   }
-  if (q) {
-    // Resolve mentors whose name matches the query so searching someone by
-    // name can find their published listings too (search spans collections).
-    const mentorIds = await User.find({
-      role: "mentor",
-      name: { $regex: q, $options: "i" },
-    }).distinct("_id");
 
+  // Always surface matching mentors so mentors can be found by name/username/skill
+  // even before they publish any listing (search spans collections).
+  const mentors = q
+    ? await User.find({
+        role: "mentor",
+        isSuspended: false,
+        $or: [
+          { name: { $regex: q, $options: "i" } },
+          { username: { $regex: q, $options: "i" } },
+          { skills: { $regex: q, $options: "i" } },
+        ],
+      })
+        .select("name username avatarUrl skills bio rating ratingCount role level xp isVerified")
+        .limit(10)
+    : [];
+
+  if (q) {
+    const mentorIds = mentors.map((m) => m._id);
     const searchOr: Record<string, unknown>[] = [
       { title: { $regex: q, $options: "i" } },
       { tags: { $regex: q, $options: "i" } },
@@ -69,6 +80,7 @@ export async function searchSkills(req: Request, res: Response) {
 
   return ok(res, {
     skills,
+    mentors,
     pagination: {
       page,
       limit,
