@@ -5,17 +5,28 @@ import app from "./app";
 import { initSocket } from "./socket";
 
 async function main() {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const httpServer = http.createServer(app);
-  initSocket(httpServer);
+    const httpServer = http.createServer(app);
+    initSocket(httpServer);
 
-  httpServer.listen(env.port, () => {
-    console.log(`[server] SkillBridge API + Socket.io listening on port ${env.port}`);
-  });
+    httpServer.listen(env.port, "0.0.0.0", () => {
+      console.log(`[server] SkillBridge API + Socket.io listening on 0.0.0.0:${env.port}`);
+    });
+  } catch (err) {
+    console.error("[server] fatal startup error:", err);
+    process.exit(1);
+  }
 }
 
-main().catch((err) => {
-  console.error("[server] fatal startup error:", err);
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[server] Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("[server] Uncaught Exception:", err);
   process.exit(1);
 });
+
+main();
