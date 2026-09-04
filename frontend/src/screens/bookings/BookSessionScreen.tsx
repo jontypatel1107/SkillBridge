@@ -14,11 +14,22 @@ import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
 import { Button } from "@/components/Button";
+import { LocationMap } from "@/components/LocationMap";
 import { useCreateBookingMutation } from "@/redux/api/bookingsApi";
+import { makeLocationPicker } from "@/utils/mapPickerBridge";
+import type { PickedLocation } from "@/utils/mapPickerBridge";
+import type { RootStackParamList } from "@/navigation/types";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { HomeStackParamList } from "@/navigation/types";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "BookSession">;
+type Props = NativeStackScreenProps<HomeStackParamList, "BookSession"> & {
+  navigation: NativeStackScreenProps<HomeStackParamList, "BookSession">["navigation"] & {
+    navigate: <T extends keyof RootStackParamList>(
+      screen: T,
+      params?: RootStackParamList[T]
+    ) => void;
+  };
+};
 
 const TIME_SLOTS = [
   "09:00", "10:00", "11:00", "12:00",
@@ -37,17 +48,29 @@ export function BookSessionScreen({ route, navigation }: Props) {
     return d;
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [location, setLocation] = useState<PickedLocation | null>(null);
   const [createBooking, { isLoading, error }] = useCreateBookingMutation();
 
   const selectedTimeStr = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 
+  const openMapPicker = () => {
+    const pick = makeLocationPicker(navigation.navigate as any);
+    pick(location ?? undefined, "Choose Meeting Point").then((result) => {
+      if (result) setLocation(result);
+    });
+  };
+
   const onSubmit = async () => {
     try {
+      if (mode === "offline" && !location) return;
       const booking = await createBooking({
         skillId,
         mode,
         scheduledAt: date.toISOString(),
         durationMinutes: 60,
+        location: location
+          ? { lng: location.longitude, lat: location.latitude, label: location.label }
+          : undefined,
       }).unwrap();
       navigation.replace("BookingSuccess", { bookingId: booking._id });
     } catch {
@@ -206,6 +229,50 @@ export function BookSessionScreen({ route, navigation }: Props) {
         </View>
       </Animated.View>
 
+      {/* Step 4: Location (offline only) */}
+      {mode === "offline" ? (
+        <Animated.View entering={FadeInDown.delay(250).duration(400)}>
+          <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm, marginTop: spacing.xl, textTransform: "uppercase", letterSpacing: 0.8 }]}>
+            Step 4
+          </Text>
+          <Text style={[typography.h3, { color: colors.text, marginBottom: spacing.md }]}>
+            Meeting Location
+          </Text>
+
+          <Pressable
+            onPress={openMapPicker}
+            style={[
+              styles.dateCard,
+              getShadow(colors, "sm"),
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Feather name="map-pin" size={20} color={colors.primary} />
+            <View style={{ flex: 1, marginLeft: spacing.md }}>
+              <Text style={[typography.bodyMedium, { color: colors.text }]}>
+                {location
+                  ? `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`
+                  : "Tap to choose meeting point"}
+              </Text>
+              <Text style={[typography.caption, { color: colors.textMuted, marginTop: 2 }]}>
+                {location ? "Tap to change" : "Required for in-person sessions"}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.textMuted} />
+          </Pressable>
+
+          {location ? (
+            <View style={[styles.mapCard, { borderColor: colors.border }]}>
+              <LocationMap
+                initial={{ latitude: location.latitude, longitude: location.longitude }}
+                interactive={false}
+                height={180}
+              />
+            </View>
+          ) : null}
+        </Animated.View>
+      ) : null}
+
       {/* Error */}
       {serverError ? (
         <View style={[styles.errorBox, { backgroundColor: colors.danger + "12", borderColor: colors.danger + "30" }]}>
@@ -231,8 +298,14 @@ export function BookSessionScreen({ route, navigation }: Props) {
         label="Confirm Booking"
         onPress={onSubmit}
         loading={isLoading}
+        disabled={mode === "offline" && !location}
         style={{ marginTop: spacing.lg }}
       />
+      {mode === "offline" && !location ? (
+        <Text style={[typography.caption, { color: colors.warning, textAlign: "center", marginTop: spacing.sm }]}>
+          Choose a meeting location to continue
+        </Text>
+      ) : null}
       <View style={{ height: spacing.xxl }} />
     </ScrollView>
   );
@@ -307,6 +380,12 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: radii.lg,
     borderWidth: 1,
+  },
+  mapCard: {
+    marginTop: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    overflow: "hidden",
   },
   summaryRow: {
     flexDirection: "row",

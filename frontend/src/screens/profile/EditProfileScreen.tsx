@@ -20,6 +20,9 @@ import { Chip } from "@/components/Chip";
 import { useUpdateProfileMutation } from "@/redux/api/userApi";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { updateUser } from "@/redux/slices/authSlice";
+import { makeLocationPicker } from "@/utils/mapPickerBridge";
+import { LocationMap } from "@/components/LocationMap";
+import type { PickedLocation } from "@/utils/mapPickerBridge";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { ProfileStackParamList } from "@/navigation/types";
 
@@ -58,6 +61,13 @@ export function EditProfileScreen({ navigation }: Props) {
   const [skills, setSkills] = useState<string[]>(user?.skills ?? []);
   const [interests, setInterests] = useState<string[]>(user?.interests ?? []);
   const [languages, setLanguages] = useState<string[]>(user?.languages ?? []);
+  const [location, setLocation] = useState<PickedLocation | null>(() => {
+    const l = user?.location;
+    if (l && l.coordinates) {
+      return { latitude: l.coordinates[1], longitude: l.coordinates[0], label: l.city };
+    }
+    return null;
+  });
   const [skillInput, setSkillInput] = useState("");
   const [interestInput, setInterestInput] = useState("");
   const [languageInput, setLanguageInput] = useState("");
@@ -98,12 +108,20 @@ export function EditProfileScreen({ navigation }: Props) {
         skills,
         interests,
         languages,
+        location: location ? { lng: location.longitude, lat: location.latitude, city: location.label } : undefined,
       }).unwrap();
       dispatch(updateUser(result));
       navigation.goBack();
     } catch {
       // surfaced below
     }
+  };
+
+  const openMapPicker = () => {
+    const pick = makeLocationPicker(navigation.navigate as any);
+    pick(location ?? undefined, "Set Your Location").then((result) => {
+      if (result) setLocation(result);
+    });
   };
 
   const serverError =
@@ -283,6 +301,42 @@ export function EditProfileScreen({ navigation }: Props) {
         </View>
       </Animated.View>
 
+      {/* Location */}
+      <Animated.View entering={FadeInDown.delay(220).duration(400)}>
+        <Text style={[typography.h3, { color: colors.text, marginTop: spacing.xl, marginBottom: spacing.md }]}>
+          Home Location
+        </Text>
+        <Pressable
+          onPress={openMapPicker}
+          style={[
+            styles.input,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <Feather name="map-pin" size={18} color={colors.primary} />
+          <View style={{ flex: 1, marginLeft: spacing.md }}>
+            <Text style={[typography.bodyMedium, { color: colors.text }]}>
+              {location
+                ? `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`
+                : "Set your location"}
+            </Text>
+            <Text style={[typography.caption, { color: colors.textMuted, marginTop: 2 }]}>
+              {location ? "Tap to change" : "Shown on your public profile"}
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color={colors.textMuted} />
+        </Pressable>
+        {location ? (
+          <View style={[styles.mapCard, { borderColor: colors.border }]}>
+            <LocationMap
+              initial={{ latitude: location.latitude, longitude: location.longitude }}
+              interactive={false}
+              height={150}
+            />
+          </View>
+        ) : null}
+      </Animated.View>
+
       {/* Error */}
       {serverError ? (
         <View style={[styles.errorBox, { backgroundColor: colors.danger + "12", borderColor: colors.danger + "30" }]}>
@@ -352,5 +406,20 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 1,
     marginTop: spacing.lg,
+  },
+
+  input: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: 1,
+  },
+  mapCard: {
+    marginTop: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    overflow: "hidden",
   },
 });

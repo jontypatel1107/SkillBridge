@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Linking,
+  Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -17,6 +18,7 @@ import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Avatar } from "@/components/Avatar";
 import { Divider } from "@/components/Divider";
+import { LocationMap } from "@/components/LocationMap";
 import { useGetBookingQuery, useUpdateBookingStatusMutation } from "@/redux/api/bookingsApi";
 import { useAppSelector } from "@/hooks/redux";
 import { Skill, User } from "@/types";
@@ -72,6 +74,14 @@ export function BookingDetailScreen({ route, navigation }: Props) {
     !!meetingUrl &&
     now < joinOpensAt;
 
+  const bookingLoc = booking.location;
+  const directionsUrl = bookingLoc
+    ? Platform.select({
+        ios: `http://maps.apple.com/?daddr=${bookingLoc.coordinates[1]},${bookingLoc.coordinates[0]}`,
+        default: `https://www.google.com/maps/dir/?api=1&destination=${bookingLoc.coordinates[1]},${bookingLoc.coordinates[0]}`,
+      })
+    : undefined;
+
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
@@ -124,6 +134,39 @@ export function BookingDetailScreen({ route, navigation }: Props) {
           ) : null}
         </View>
       </Animated.View>
+
+      {/* Offline Location */}
+      {booking.mode === "offline" && bookingLoc ? (
+        <Animated.View entering={FadeInDown.delay(150).duration(400)}>
+          <View style={[styles.participantsCard, getShadow(colors, "sm"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>
+              Meeting Location
+            </Text>
+            {bookingLoc.label ? (
+              <Text style={[typography.bodySmall, { color: colors.textMuted, marginBottom: spacing.sm }]}>
+                {bookingLoc.label}
+              </Text>
+            ) : null}
+            <LocationMap
+              initial={{
+                latitude: bookingLoc.coordinates[1],
+                longitude: bookingLoc.coordinates[0],
+              }}
+              interactive={false}
+              height={180}
+            />
+            {directionsUrl ? (
+              <Button
+                label="Get Directions"
+                variant="outline"
+                onPress={() => Linking.openURL(directionsUrl)}
+                icon={<Feather name="navigation" size={18} color={colors.primary} />}
+                style={{ marginTop: spacing.md }}
+              />
+            ) : null}
+          </View>
+        </Animated.View>
+      ) : null}
 
       {/* Actions */}
       <Animated.View entering={FadeInDown.delay(200).duration(400)} style={{ marginTop: spacing.xl }}>
