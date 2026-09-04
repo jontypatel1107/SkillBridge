@@ -9,8 +9,6 @@ interface AuthedSocket extends Socket {
   userId?: string;
 }
 
-// userId -> set of connected socket ids, so one user can have multiple
-// devices/tabs open and still receive messages on all of them.
 const onlineUsers = new Map<string, Set<string>>();
 
 export function initSocket(httpServer: HttpServer): Server {
@@ -27,7 +25,7 @@ export function initSocket(httpServer: HttpServer): Server {
       const payload = verifyAccessToken(token);
       socket.userId = payload.sub;
       next();
-    } catch {
+    } catch (err) {
       next(new Error("Invalid or expired token"));
     }
   });
@@ -37,33 +35,37 @@ export function initSocket(httpServer: HttpServer): Server {
 
     if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
     onlineUsers.get(userId)!.add(socket.id);
-    socket.join(userId); // room per user — makes targeted emits simple
+    socket.join(userId);
     io.emit("presence:online", { userId });
 
     socket.on("message:send", async (payload: { recipientId: string; text?: string; imageUrl?: string; bookingId?: string }) => {
-      const { recipientId, text, imageUrl, bookingId } = payload;
-      if (!recipientId || (!text && !imageUrl)) return;
+      try {
+        const { recipientId, text, imageUrl, bookingId } = payload;
+        if (!recipientId || (!text && !imageUrl)) return;
 
-      const message = await Message.create({
-        sender: userId,
-        recipient: recipientId,
-        text,
-        imageUrl,
-        booking: bookingId,
-      });
-
-      io.to(recipientId).emit("message:new", message);
-      io.to(userId).emit("message:new", message); // echo back to sender's other devices
-
-      const recipientOnline = onlineUsers.has(recipientId);
-      if (!recipientOnline) {
-        await notify({
+        const message = await Message.create({
+          sender: userId,
           recipient: recipientId,
-          type: "new_message",
-          title: "New message",
-          body: text ? text.slice(0, 100) : "Sent you an image",
-          relatedId: message._id,
+          text,
+          imageUrl,
+          booking: bookingId,
         });
+
+        io.to(recipientId).emit("message:new", message);
+        io.to(userId).emit("message:new", message);
+
+        const recipientOnline = onlineUsers.has(recipientId);
+        if (!recipientOnline) {
+          await notify({
+            recipient: recipientId,
+            type: "new_message",
+            title: "New message",
+            body: text ? text.slice(0, 100) : "Sent you an image",
+            relatedId: message._id,
+          });
+        }
+      } catch (err) {
+        console.error("[socket] message:send error:", err);
       }
     });
 
@@ -76,11 +78,15 @@ export function initSocket(httpServer: HttpServer): Server {
     });
 
     socket.on("message:read", async ({ otherUserId }: { otherUserId: string }) => {
-      await Message.updateMany(
-        { sender: otherUserId, recipient: userId, readAt: { $exists: false } },
-        { readAt: new Date() }
-      );
-      io.to(otherUserId).emit("message:read", { by: userId });
+      try {
+        await Message.updateMany(
+          { sender: otherUserId, recipient: userId, readAt: { $exists: false } },
+          { readAt: new Date() }
+        );
+        io.to(otherUserId).emit("message:read", { by: userId });
+      } catch (err) {
+        console.error("[socket] message:read error:", err);
+      }
     });
 
     socket.on("disconnect", () => {
