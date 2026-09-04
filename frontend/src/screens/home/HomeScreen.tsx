@@ -21,7 +21,6 @@ import { useAppSelector } from "@/hooks/redux";
 import { Skill, User, SkillCategory } from "@/types";
 import { Avatar } from "@/components/Avatar";
 import { SectionHeader } from "@/components/SectionHeader";
-import { SearchBar } from "@/components/SearchBar";
 import { SkeletonCard, SkeletonMentorCard } from "@/components/Skeleton";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { HomeStackParamList } from "@/navigation/types";
@@ -72,26 +71,57 @@ export function HomeScreen({ navigation }: Props) {
       >
         {/* Header */}
         <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-          <View style={styles.greetingRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={[typography.caption, { color: colors.textMuted }]}>
-                {getGreeting()} {getGreetingEmoji()}
-              </Text>
-              <Text style={[typography.h1, { color: colors.text }]} numberOfLines={1}>
-                {user?.name?.split(" ")[0] ?? "there"}
-              </Text>
+          <LinearGradient
+            colors={gradients.hero.colors as any}
+            start={gradients.hero.start}
+            end={gradients.hero.end}
+            style={[styles.heroPanel, getShadow(colors, "float")]}
+          >
+            <View style={styles.heroTopGlow} />
+            <View style={styles.greetingRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.heroEyebrow}>
+                  {getGreeting()} {getGreetingEmoji()}
+                </Text>
+                <Text style={styles.heroTitle} numberOfLines={1}>
+                  {user?.name?.split(" ")[0] ?? "there"}
+                </Text>
+                <Text style={styles.heroSubtitle} numberOfLines={2}>
+                  Find a mentor, launch a session, and keep your learning streak moving.
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => navigation.getParent()?.navigate("ProfileTab")}
+                accessibilityRole="button"
+                accessibilityLabel="Open your profile"
+                style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+              >
+                <View style={styles.avatarRing}>
+                  <Avatar uri={user?.avatarUrl} name={user?.name ?? "U"} size={50} />
+                </View>
+              </Pressable>
             </View>
-            <Avatar uri={user?.avatarUrl} name={user?.name ?? "U"} size={48} />
-          </View>
 
-          <Pressable onPress={() => navigation.getParent()?.navigate("ExploreTab")}>
-            <SearchBar
-              value=""
-              onChangeText={() => {}}
-              placeholder="What do you want to learn?"
-              style={{ marginTop: spacing.lg }}
-            />
-          </Pressable>
+            <View style={styles.heroStats}>
+              <MiniStat icon="layers" label="Skills" value={String(skills.length)} />
+              <MiniStat icon="users" label="Mentors" value={String(mentors.length)} />
+              <MiniStat icon="zap" label="AI Picks" value={String(suggestedSkills.length)} />
+            </View>
+
+            <Pressable
+              onPress={() => navigation.getParent()?.navigate("ExploreTab")}
+              style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Search skills and mentors"
+            >
+              <View style={styles.heroSearchWrap}>
+                <Feather name="search" size={18} color="#666B7A" style={styles.heroSearchIcon} />
+                <Text style={styles.heroSearchPlaceholder}>
+                  What do you want to learn?
+                </Text>
+              </View>
+            </Pressable>
+          </LinearGradient>
         </Animated.View>
 
         {/* AI Card */}
@@ -100,6 +130,7 @@ export function HomeScreen({ navigation }: Props) {
             onPress={() =>
               navigation.getParent()?.navigate("ProfileTab", {
                 screen: "Roadmaps",
+                initial: false,
               })
             }
             style={({ pressed }) => [{ opacity: pressed ? 0.95 : 1 }]}
@@ -188,7 +219,12 @@ export function HomeScreen({ navigation }: Props) {
               contentContainerStyle={styles.mentorsList}
               renderItem={({ item }) => (
                 <Pressable
-                  onPress={() => {}}
+                  onPress={() =>
+                    navigation.navigate("MentorDetail", {
+                      username: item.username,
+                      mentor: item,
+                    })
+                  }
                   style={({ pressed }) => [
                     styles.mentorCard,
                     getShadow(colors, "sm"),
@@ -300,6 +336,18 @@ function getGreetingEmoji(): string {
   return "🌙";
 }
 
+function MiniStat({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <View style={styles.miniStat}>
+      <Feather name={icon as any} size={14} color="#FFFFFF" />
+      <View>
+        <Text style={styles.miniStatValue}>{value}</Text>
+        <Text style={styles.miniStatLabel}>{label}</Text>
+      </View>
+    </View>
+  );
+}
+
 function SkillListItem({ skill }: { skill: Skill }) {
   const { colors } = useTheme();
   const mentor = typeof skill.mentor === "object" ? (skill.mentor as User) : null;
@@ -345,12 +393,98 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  heroPanel: {
+    borderRadius: 28,
+    padding: spacing.lg,
+    overflow: "hidden",
+  },
+  heroTopGlow: {
+    position: "absolute",
+    left: -20,
+    right: -20,
+    top: -42,
+    height: 92,
+    backgroundColor: "rgba(255,255,255,0.16)",
+    transform: [{ rotate: "-8deg" }],
   },
   greetingRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  heroEyebrow: {
+    ...typography.caption,
+    color: "rgba(255,255,255,0.76)",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    fontWeight: "800",
+  },
+  heroTitle: {
+    ...typography.h1,
+    color: "#FFFFFF",
+    marginTop: spacing.xs,
+  },
+  heroSubtitle: {
+    ...typography.bodySmall,
+    color: "rgba(255,255,255,0.78)",
+    marginTop: spacing.xs,
+    maxWidth: 240,
+  },
+  avatarRing: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.42)",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroStats: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  miniStat: {
+    flex: 1,
+    minHeight: 58,
+    borderRadius: radii.md,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    justifyContent: "center",
+    gap: 4,
+  },
+  miniStatValue: {
+    ...typography.bodyMedium,
+    color: "#FFFFFF",
+    fontWeight: "800",
+  },
+  miniStatLabel: {
+    ...typography.tiny,
+    color: "rgba(255,255,255,0.72)",
+    textTransform: "uppercase",
+  },
+  heroSearchWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.lg,
+    minHeight: 52,
+    borderRadius: radii.lg,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  heroSearchIcon: {
+    marginRight: spacing.sm,
+  },
+  heroSearchPlaceholder: {
+    ...typography.body,
+    color: "#666B7A",
   },
 
   // AI Card

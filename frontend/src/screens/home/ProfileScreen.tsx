@@ -6,21 +6,27 @@ import {
   Pressable,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
 import { gradients } from "@/theme/gradients";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
+import { Chip } from "@/components/Chip";
+import { ProgressBar } from "@/components/ProgressBar";
 import { Divider } from "@/components/Divider";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { setUnauthenticated } from "@/redux/slices/authSlice";
+import { setUnauthenticated, updateUser } from "@/redux/slices/authSlice";
 import { useLogoutMutation } from "@/redux/api/authApi";
+import { useGetMyGamificationQuery, useUpdateAvatarMutation } from "@/redux/api/userApi";
 import { tokenStorage } from "@/utils/tokenStorage";
 import { disconnectSocket } from "@/services/socket";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -33,6 +39,14 @@ export function ProfileScreen({ navigation }: Props) {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const [logout, { isLoading }] = useLogoutMutation();
+  const { data: gamification } = useGetMyGamificationQuery();
+  const [updateAvatar, { isLoading: avatarUploading }] = useUpdateAvatarMutation();
+
+  const levelProgress =
+    gamification && gamification.xpNeededForLevel > 0
+      ? gamification.xpIntoLevel / gamification.xpNeededForLevel
+      : 0;
+  const badges = gamification?.badges ?? [];
 
   const handleLogout = async () => {
     Alert.alert("Log out", "Are you sure you want to log out?", [
@@ -50,6 +64,34 @@ export function ProfileScreen({ navigation }: Props) {
         },
       },
     ]);
+  };
+
+  const handlePickAvatar = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Permission needed", "Allow photo access to change your profile picture.");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+        base64: true,
+      });
+
+      if (result.canceled || !result.assets[0]?.base64) return;
+
+      const mime = result.assets[0].mimeType ?? "image/jpeg";
+      const dataUrl = `data:${mime};base64,${result.assets[0].base64}`;
+      const updated = await updateAvatar({ dataUrl }).unwrap();
+      dispatch(updateUser(updated));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    } catch {
+      Alert.alert("Upload failed", "Could not update your profile picture. Please try again.");
+    }
   };
 
   const menuItems: {
@@ -92,6 +134,12 @@ export function ProfileScreen({ navigation }: Props) {
       onPress: () => navigation.navigate("Roadmaps"),
     },
     {
+      icon: "award",
+      label: "Leaderboard",
+      subtitle: "See how you rank",
+      onPress: () => navigation.navigate("Leaderboard"),
+    },
+    {
       icon: "bell",
       label: "Notifications",
       subtitle: "Stay updated",
@@ -127,7 +175,24 @@ export function ProfileScreen({ navigation }: Props) {
           style={styles.headerGradient}
         >
           <View style={styles.avatarContainer}>
-            <Avatar uri={user?.avatarUrl} name={user?.name ?? "U"} size={80} />
+            <Pressable
+              onPress={handlePickAvatar}
+              disabled={avatarUploading}
+              accessibilityRole="button"
+              accessibilityLabel="Change profile picture"
+              style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+            >
+              <Avatar uri={user?.avatarUrl} name={user?.name ?? "U"} size={80} />
+              <View
+                style={[styles.avatarEditBadge, { backgroundColor: colors.primary }]}
+              >
+                {avatarUploading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Feather name="camera" size={14} color="#FFFFFF" />
+                )}
+              </View>
+            </Pressable>
           </View>
           <Text style={styles.profileName}>{user?.name}</Text>
           <Text style={styles.profileUsername}>@{user?.username}</Text>
@@ -143,6 +208,24 @@ export function ProfileScreen({ navigation }: Props) {
           </View>
         </LinearGradient>
       </Animated.View>
+
+      {/* Home Location */}
+      {user?.location?.coordinates ? (
+        <Animated.View entering={FadeInDown.delay(80).duration(400)}>
+          <View
+            style={[
+              styles.locationRow,
+              getShadow(colors, "sm"),
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Feather name="map-pin" size={16} color={colors.primary} />
+            <Text style={[typography.caption, { color: colors.text, marginLeft: spacing.sm, flex: 1 }]}>
+              {user.location.city ?? `Home: ${user.location.coordinates[1].toFixed(3)}, ${user.location.coordinates[0].toFixed(3)}`}
+            </Text>
+          </View>
+        </Animated.View>
+      ) : null}
 
       {/* Stats */}
       <Animated.View entering={FadeInDown.delay(100).duration(400)}>
@@ -168,6 +251,53 @@ export function ProfileScreen({ navigation }: Props) {
             colors={colors}
           />
         </View>
+      </Animated.View>
+
+      {/* Gamification Progress */}
+      <Animated.View entering={FadeInDown.delay(150).duration(400)}>
+        <Card style={styles.progressCard}>
+          <View style={styles.progressHeader}>
+            <View>
+              <Text style={[typography.h4, { color: colors.text }]}>
+                Level {gamification?.level ?? 1}
+              </Text>
+              <Text style={[typography.caption, { color: colors.textMuted }]}>
+                {gamification?.levelTitle ?? "Beginner"}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.streakPill,
+                { backgroundColor: colors.surfaceMuted, borderColor: colors.border },
+              ]}
+            >
+              <Feather name="zap" size={14} color={colors.warning} />
+              <Text style={[typography.caption, { color: colors.text }]}>
+                {gamification?.streak.current ?? 0} day streak
+              </Text>
+            </View>
+          </View>
+
+          <ProgressBar progress={levelProgress} style={{ marginTop: spacing.md }} />
+
+          <Text style={[typography.tiny, { color: colors.textMuted, marginTop: spacing.xs }]}>
+            {gamification
+              ? `${gamification.xpIntoLevel} / ${gamification.xpNeededForLevel} XP to level ${gamification.level + 1}`
+              : "Complete sessions to earn XP"}
+          </Text>
+
+          {badges.length > 0 ? (
+            <View style={styles.badgeRow}>
+              {badges.map((badge) => (
+                <Chip
+                  key={badge.code}
+                  label={badge.name}
+                  icon={<Feather name="award" size={12} color={colors.primary} />}
+                />
+              ))}
+            </View>
+          ) : null}
+        </Card>
       </Animated.View>
 
       {/* Menu */}
@@ -263,6 +393,18 @@ const styles = StyleSheet.create({
     borderRadius: 44,
     padding: 2,
   },
+  avatarEditBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.9)",
+  },
   profileName: {
     ...typography.h2,
     color: "#FFFFFF",
@@ -298,6 +440,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: spacing.lg,
   },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
   statBlock: {
     flex: 1,
     alignItems: "center",
@@ -305,6 +457,32 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     marginVertical: 4,
+  },
+
+  // Gamification
+  progressCard: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.xl,
+  },
+  progressHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  streakPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  badgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.md,
   },
 
   // Menu

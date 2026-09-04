@@ -9,8 +9,10 @@ import {
   ActivityIndicator,
   TextInput,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import * as Location from "expo-location";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
@@ -19,7 +21,11 @@ import { SearchBar } from "@/components/SearchBar";
 import { Chip } from "@/components/Chip";
 import { EmptyState } from "@/components/EmptyState";
 import { SkeletonCard } from "@/components/Skeleton";
+import { MentorCard } from "@/components/MentorCard";
+import { SectionHeader } from "@/components/SectionHeader";
 import { useSearchSkillsQuery } from "@/redux/api/skillsApi";
+import { useNearbyMentorsQuery } from "@/redux/api/userApi";
+import { useAppSelector } from "@/hooks/redux";
 import { Skill, SkillCategory, User } from "@/types";
 import { Avatar } from "@/components/Avatar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -71,6 +77,57 @@ export function ExploreScreen({ navigation }: Props) {
   });
 
   const pagination = data?.pagination;
+  const mentors = data?.mentors ?? [];
+
+  // ---- Nearby mentors (uses your profile location, or device location as a fallback) ----
+  const viewer = useAppSelector((s) => s.auth.user);
+  const profileLoc = viewer?.location as { coordinates?: [number, number] } | undefined;
+  const [deviceLoc, setDeviceLoc] = useState<{ lat: number; lng: number } | null>(null);
+  const [preferDevice, setPreferDevice] = useState(false);
+  const [locating, setLocating] = useState(false);
+
+  const nearCenter = useMemo(() => {
+    if (deviceLoc && preferDevice) return deviceLoc;
+    if (profileLoc?.coordinates && profileLoc.coordinates.length === 2) {
+      return { lng: profileLoc.coordinates[0], lat: profileLoc.coordinates[1] };
+    }
+    if (deviceLoc) return deviceLoc;
+    return null;
+  }, [profileLoc, deviceLoc, preferDevice]);
+
+  const {
+    data: nearbyData,
+    isLoading: nearbyLoading,
+  } = useNearbyMentorsQuery(
+    nearCenter ? { ...nearCenter, radiusKm: 25, limit: 20 } : { lng: 0, lat: 0 },
+    { skip: !nearCenter }
+  );
+
+  const nearbyMentors = (nearbyData?.mentors ?? []).filter(
+    (m) => (m.id ?? m._id) !== (viewer?.id ?? viewer?._id)
+  );
+
+  const tryDeviceLocation = useCallback(async (force = false) => {
+    try {
+      setLocating(true);
+      if (force) setPreferDevice(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
+      const loc = await Location.getCurrentPositionAsync({});
+      setDeviceLoc({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+    } catch {
+      // ignore — fall back to profile location or hidden section
+    } finally {
+      setLocating(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!profileLoc?.coordinates && !deviceLoc) {
+      tryDeviceLocation(false);
+    }
+  }, [profileLoc, deviceLoc, tryDeviceLocation]);
+
 
   useEffect(() => {
     if (page === 1) {
@@ -133,13 +190,36 @@ export function ExploreScreen({ navigation }: Props) {
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <LinearGradient
+          colors={[colors.primary, colors.cyan]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroCard}
+        >
+          <Text style={styles.heroEyebrow}>Discover</Text>
+          <Text style={styles.heroTitle}>Find your next skill.</Text>
+          <Text style={styles.heroSubtitle}>
+            Explore curated classes, mentors, and high-impact learning paths.
+          </Text>
+          <View style={styles.heroStatsRow}>
+            <View style={styles.heroStatPill}>
+              <Feather name="users" size={12} color="#FFFFFF" />
+              <Text style={styles.heroStatText}>Top mentors</Text>
+            </View>
+            <View style={styles.heroStatPill}>
+              <Feather name="trending-up" size={12} color="#FFFFFF" />
+              <Text style={styles.heroStatText}>Fresh picks</Text>
+            </View>
+          </View>
+        </LinearGradient>
+
         <SearchBar
           value={query}
           onChangeText={handleSearchChange}
           placeholder="Search skills, mentors, topics..."
+          style={styles.searchBar}
         />
 
-        {/* Sort + Filter toggle row */}
         <View style={styles.toolbarRow}>
           <View style={styles.sortRow}>
             {SORT_OPTIONS.map((opt) => (
@@ -166,13 +246,10 @@ export function ExploreScreen({ navigation }: Props) {
           </Pressable>
         </View>
 
-        {/* Price Filter Panel */}
         {showFilters && (
           <Animated.View entering={FadeInDown.duration(200)}>
             <View style={[styles.filterPanel, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>
-                Price Range ($/hr)
-              </Text>
+              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>Price Range ($/hr)</Text>
               <View style={styles.priceRow}>
                 <TextInput
                   style={[styles.priceInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
@@ -191,17 +268,11 @@ export function ExploreScreen({ navigation }: Props) {
                   value={maxPrice}
                   onChangeText={setMaxPrice}
                 />
-                <Pressable
-                  onPress={handleApplyPrice}
-                  style={[styles.applyBtn, { backgroundColor: colors.primary }]}
-                >
+                <Pressable onPress={handleApplyPrice} style={[styles.applyBtn, { backgroundColor: colors.primary }]}>
                   <Feather name="check" size={16} color="#FFFFFF" />
                 </Pressable>
                 {hasActiveFilters && (
-                  <Pressable
-                    onPress={resetAllFilters}
-                    style={[styles.applyBtn, { backgroundColor: colors.danger + "18" }]}
-                  >
+                  <Pressable onPress={resetAllFilters} style={[styles.applyBtn, { backgroundColor: colors.danger + "18" }]}>
                     <Feather name="x" size={16} color={colors.danger} />
                   </Pressable>
                 )}
@@ -210,7 +281,6 @@ export function ExploreScreen({ navigation }: Props) {
           </Animated.View>
         )}
 
-        {/* Category Chips */}
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -272,6 +342,62 @@ export function ExploreScreen({ navigation }: Props) {
           onEndReachedThreshold={0.3}
           ListHeaderComponent={
             <>
+              {nearCenter && (nearbyMentors.length > 0 || nearbyLoading) ? (
+                <View style={styles.mentorSection}>
+                  <SectionHeader
+                    title="Nearby Mentors"
+                    action={locating ? "Locating…" : "Use my location"}
+                    onAction={locating ? undefined : () => tryDeviceLocation(true)}
+                  />
+                  {nearbyLoading ? (
+                    <View style={styles.nearbyLoader}>
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    </View>
+                  ) : (
+                    <FlatList
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      data={nearbyMentors}
+                      keyExtractor={(m) => m.id ?? m._id ?? m.username}
+                      contentContainerStyle={styles.mentorList}
+                      renderItem={({ item }) => (
+                        <NearbyMentorCard
+                          mentor={item}
+                          onPress={() =>
+                            navigation.navigate("MentorDetail", {
+                              username: item.username,
+                              mentor: item,
+                            })
+                          }
+                        />
+                      )}
+                    />
+                  )}
+                </View>
+              ) : null}
+              {mentors.length > 0 ? (
+                <View style={styles.mentorSection}>
+                  <SectionHeader title="Mentors" />
+                  <FlatList
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    data={mentors}
+                    keyExtractor={(m) => m.id ?? m._id ?? m.username}
+                    contentContainerStyle={styles.mentorList}
+                    renderItem={({ item }) => (
+                      <MentorCard
+                        mentor={item}
+                        onPress={() =>
+                          navigation.navigate("MentorDetail", {
+                            username: item.username,
+                            mentor: item,
+                          })
+                        }
+                      />
+                    )}
+                  />
+                </View>
+              ) : null}
               {hasActiveFilters || query.trim() ? (
                 <View style={styles.resultInfo}>
                   <Text style={[typography.caption, { color: colors.textMuted }]}>
@@ -282,16 +408,18 @@ export function ExploreScreen({ navigation }: Props) {
             </>
           }
           ListEmptyComponent={
-            <EmptyState
-              icon="🔍"
-              title="No matches found"
-              subtitle="Try a different search term or adjust your filters."
-              action={
-                hasActiveFilters ? (
-                  <Chip label="Clear filters" onPress={resetAllFilters} />
-                ) : undefined
-              }
-            />
+            mentors.length === 0 ? (
+              <EmptyState
+                icon="🔍"
+                title="No matches found"
+                subtitle="Try a different search term or adjust your filters."
+                action={
+                  hasActiveFilters ? (
+                    <Chip label="Clear filters" onPress={resetAllFilters} />
+                  ) : undefined
+                }
+              />
+            ) : null
           }
           ListFooterComponent={
             isFetching && page > 1 ? (
@@ -323,6 +451,59 @@ export function ExploreScreen({ navigation }: Props) {
   );
 }
 
+function NearbyMentorCard({
+  mentor,
+  onPress,
+}: {
+  mentor: User;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  const area = mentor.location?.city;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.nearbyCard,
+        getShadow(colors, "sm"),
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          opacity: pressed ? 0.95 : 1,
+        },
+      ]}
+    >
+      <Avatar uri={mentor.avatarUrl} name={mentor.name} size={48} online />
+      <Text style={[typography.bodyMedium, { color: colors.text, marginTop: spacing.sm }]} numberOfLines={1}>
+        {mentor.name}
+      </Text>
+      <View style={styles.nearbyBadge}>
+        <Feather name="map-pin" size={12} color={colors.primary} />
+        <Text style={[typography.tiny, { color: colors.primary, marginLeft: 4 }]}>
+          {mentor.distanceKm != null
+            ? `${mentor.distanceKm < 1 ? "<1" : mentor.distanceKm} km away`
+            : area ?? "Nearby"}
+        </Text>
+      </View>
+      {mentor.skills && mentor.skills.length > 0 ? (
+        <Text style={[typography.caption, { color: colors.textMuted, marginTop: 2 }]} numberOfLines={1}>
+          {mentor.skills[0]}
+        </Text>
+      ) : null}
+      <View style={styles.rating}>
+        {mentor.rating ? (
+          <Text style={[typography.small, { color: colors.warning }]}>
+            ⭐ {mentor.rating.toFixed(1)}
+          </Text>
+        ) : (
+          <Text style={[typography.small, { color: colors.textMuted }]}>New</Text>
+        )}
+      </View>
+    </Pressable>
+  );
+}
+
 function ExploreResultCard({ skill }: { skill: Skill }) {
   const { colors } = useTheme();
   const mentor = typeof skill.mentor === "object" ? (skill.mentor as User) : null;
@@ -346,11 +527,13 @@ function ExploreResultCard({ skill }: { skill: Skill }) {
           <Text style={[typography.bodyMedium, { color: colors.text }]} numberOfLines={1}>
             {skill.title}
           </Text>
-          <Text style={[typography.bodyMedium, { color: colors.primary, fontWeight: "600" }]}>
-            ${skill.hourlyPrice}
-          </Text>
+          <View style={[styles.pricePill, { backgroundColor: colors.primaryMuted }]}>
+            <Text style={[typography.bodyMedium, { color: colors.primary, fontWeight: "700" }]}>
+              ${skill.hourlyPrice}
+            </Text>
+          </View>
         </View>
-        <Text style={[typography.bodySmall, { color: colors.textMuted }]} numberOfLines={2}>
+        <Text style={[typography.bodySmall, { color: colors.textMuted, marginTop: 6 }]} numberOfLines={2}>
           {skill.description}
         </Text>
         <View style={styles.resultMeta}>
@@ -378,8 +561,56 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  heroCard: {
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    overflow: "hidden",
+  },
+  heroEyebrow: {
+    ...typography.caption,
+    color: "rgba(255,255,255,0.8)",
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+    fontWeight: "800",
+  },
+  heroTitle: {
+    ...typography.h2,
+    color: "#FFFFFF",
+    marginTop: spacing.sm,
+  },
+  heroSubtitle: {
+    ...typography.body,
+    color: "rgba(255,255,255,0.85)",
+    marginTop: spacing.xs,
+    lineHeight: 22,
+  },
+  heroStatsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  heroStatPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+  },
+  heroStatText: {
+    ...typography.caption,
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+  searchBar: {
+    marginTop: spacing.md,
   },
   toolbarRow: {
     flexDirection: "row",
@@ -398,8 +629,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   filterToggle: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: radii.md,
     alignItems: "center",
     justifyContent: "center",
@@ -419,7 +650,7 @@ const styles = StyleSheet.create({
   },
   priceInput: {
     flex: 1,
-    height: 40,
+    height: 42,
     borderRadius: radii.md,
     borderWidth: 1,
     paddingHorizontal: spacing.md,
@@ -435,7 +666,7 @@ const styles = StyleSheet.create({
   chipList: {
     gap: spacing.sm,
     marginTop: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.xs,
   },
   listContent: {
     paddingHorizontal: spacing.lg,
@@ -444,6 +675,34 @@ const styles = StyleSheet.create({
   },
   resultInfo: {
     marginBottom: spacing.md,
+  },
+  mentorSection: {
+    marginBottom: spacing.sm,
+  },
+  mentorList: {
+    gap: spacing.md,
+    paddingRight: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  nearbyLoader: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.lg,
+  },
+  nearbyCard: {
+    width: 130,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    alignItems: "center",
+  },
+  nearbyBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.xs,
+  },
+  rating: {
+    marginTop: spacing.xs,
   },
   footerLoader: {
     flexDirection: "row",
@@ -463,8 +722,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   resultIcon: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: radii.md,
     alignItems: "center",
     justifyContent: "center",
@@ -476,21 +735,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: spacing.sm,
+  },
+  pricePill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: radii.full,
+    alignItems: "center",
+    justifyContent: "center",
   },
   resultMeta: {
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
     marginTop: spacing.sm,
     gap: spacing.sm,
   },
   miniCategory: {
     paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderRadius: radii.full,
   },
   resultMentor: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    maxWidth: "60%",
   },
 });

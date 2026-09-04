@@ -55,7 +55,9 @@ export function RoadmapScreen() {
           end={gradients.hero.end}
           style={styles.hero}
         >
-          <Feather name="cpu" size={28} color="rgba(255,255,255,0.9)" />
+          <View style={styles.heroBadge}>
+            <Feather name="cpu" size={22} color="rgba(255,255,255,0.9)" />
+          </View>
           <Text style={styles.heroTitle}>Your AI Learning Coach</Text>
           <Text style={styles.heroSubtitle}>
             Tell me what you want to learn and I'll build a personalized roadmap.
@@ -86,6 +88,7 @@ export function RoadmapScreen() {
             label="Build My Roadmap"
             onPress={onGenerate}
             loading={isLoading}
+            style={styles.primaryAction}
             icon={!isLoading ? <Feather name="zap" size={18} color="#FFFFFF" /> : undefined}
           />
         </View>
@@ -232,6 +235,17 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     padding: spacing.xl,
     alignItems: "center",
+    overflow: "hidden",
+  },
+  heroBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
   },
   heroTitle: {
     ...typography.h2,
@@ -253,13 +267,18 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     borderWidth: 1,
     padding: spacing.lg,
+    gap: spacing.md,
+  },
+  primaryAction: {
+    marginTop: spacing.xs,
+    width: "100%",
   },
   errorBox: {
     flexDirection: "row",
     alignItems: "center",
     padding: spacing.md,
     borderRadius: radii.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
   },
 
   // Plan Card

@@ -107,6 +107,8 @@ export function LoginScreen({ navigation }: Props) {
                   label="Email"
                   autoCapitalize="none"
                   keyboardType="email-address"
+                  textContentType="username"
+                  autoComplete="username"
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
@@ -122,6 +124,8 @@ export function LoginScreen({ navigation }: Props) {
                 <TextField
                   label="Password"
                   secureTextEntry
+                  textContentType="password"
+                  autoComplete="password"
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}

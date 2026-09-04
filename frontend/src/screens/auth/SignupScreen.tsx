@@ -26,17 +26,23 @@ import { setAuthenticated } from "@/redux/slices/authSlice";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "@/navigation/types";
 
-const signupSchema = z.object({
-  name: z.string().trim().min(2, "Enter your name"),
-  username: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(3, "At least 3 characters")
-    .regex(/^[a-z0-9_.]+$/, "Letters, numbers, dots, underscores only"),
-  email: z.string().trim().toLowerCase().email("Enter a valid email"),
-  password: z.string().min(8, "At least 8 characters"),
-});
+const signupSchema = z
+  .object({
+    name: z.string().trim().min(2, "Enter your name"),
+    username: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(3, "At least 3 characters")
+      .regex(/^[a-z0-9_.]+$/, "Letters, numbers, dots, underscores only"),
+    email: z.string().trim().toLowerCase().email("Enter a valid email"),
+    password: z.string().min(8, "At least 8 characters"),
+    confirmPassword: z.string().min(1, "Confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords don't match",
+  });
 type SignupForm = z.infer<typeof signupSchema>;
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Signup">;
@@ -55,7 +61,8 @@ export function SignupScreen({ navigation }: Props) {
 
   const onSubmit = async (values: SignupForm) => {
     try {
-      const result = await register({ ...values, role }).unwrap();
+      const { confirmPassword: _ignored, ...payload } = values;
+      const result = await register({ ...payload, role }).unwrap();
       await tokenStorage.setTokens(result.accessToken, result.refreshToken);
       dispatch(setAuthenticated(result.user));
     } catch {
@@ -176,6 +183,8 @@ export function SignupScreen({ navigation }: Props) {
                   label="Email"
                   autoCapitalize="none"
                   keyboardType="email-address"
+                  textContentType="username"
+                  autoComplete="username"
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
@@ -190,10 +199,28 @@ export function SignupScreen({ navigation }: Props) {
                 <TextField
                   label="Password"
                   secureTextEntry
+                  textContentType="password"
+                  autoComplete="password"
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
                   error={errors.password?.message}
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="confirmPassword"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextField
+                  label="Confirm password"
+                  secureTextEntry
+                  textContentType="password"
+                  autoComplete="password"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  error={errors.confirmPassword?.message}
                 />
               )}
             />
