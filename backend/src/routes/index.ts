@@ -8,6 +8,7 @@ import notificationRoutes from "./notificationRoutes";
 import chatRoutes from "./chatRoutes";
 import aiRoutes from "./aiRoutes";
 import adminRoutes from "./adminRoutes";
+import meetingRoutes from "./meetingRoutes";
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use("/notifications", notificationRoutes);
 router.use("/chat", chatRoutes);
 router.use("/ai", aiRoutes);
 router.use("/admin", adminRoutes);
+router.use("/meetings", meetingRoutes);
 
 export default router;

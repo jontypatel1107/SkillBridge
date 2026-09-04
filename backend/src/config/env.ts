@@ -32,4 +32,8 @@ export const env = {
     pass: process.env.SMTP_PASS ?? "",
     from: process.env.SMTP_FROM ?? "",
   },
+  daily: {
+    apiKey: process.env.DAILY_API_KEY ?? "",
+    baseUrl: process.env.DAILY_BASE_URL ?? "https://api.daily.co/v1",
+  },
 };
