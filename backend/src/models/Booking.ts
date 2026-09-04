@@ -12,6 +12,11 @@ export interface IBooking extends Document {
   durationMinutes: number;
   status: BookingStatus;
   meetingUrl?: string;
+  location?: {
+    type: "Point";
+    coordinates: [number, number]; // [lng, lat]
+    label?: string;
+  };
   cancelReason?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +36,14 @@ const bookingSchema = new Schema<IBooking>(
       default: "pending",
     },
     meetingUrl: { type: String },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+      },
+      coordinates: { type: [Number], default: undefined },
+      label: { type: String, maxlength: 200 },
+    },
     cancelReason: { type: String, maxlength: 300 },
   },
   { timestamps: true }
@@ -38,5 +51,6 @@ const bookingSchema = new Schema<IBooking>(
 
 bookingSchema.index({ mentor: 1, scheduledAt: 1 });
 bookingSchema.index({ learner: 1, scheduledAt: 1 });
+bookingSchema.index({ location: "2dsphere" });
 
 export const Booking = model<IBooking>("Booking", bookingSchema);

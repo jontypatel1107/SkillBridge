@@ -44,7 +44,7 @@ async function expireStaleConfirmedBookings(userId?: string) {
 }
 
 export async function createBooking(req: AuthedRequest, res: Response) {
-  const { skillId, mode, scheduledAt, durationMinutes } = req.body as CreateBookingInput;
+  const { skillId, mode, scheduledAt, durationMinutes, location } = req.body as CreateBookingInput;
 
   const skill = await Skill.findById(skillId);
   if (!skill || !skill.isActive) {
@@ -63,6 +63,14 @@ export async function createBooking(req: AuthedRequest, res: Response) {
     scheduledAt,
     durationMinutes,
     status: "pending",
+    location:
+      mode === "offline" && location
+        ? {
+            type: "Point",
+            coordinates: [location.lng, location.lat],
+            label: location.label,
+          }
+        : undefined,
   });
 
   if (mode === "online") {

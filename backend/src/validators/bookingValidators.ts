@@ -9,6 +9,13 @@ export const createBookingSchema = z.object({
     message: "scheduledAt must be in the future",
   }),
   durationMinutes: z.number().int().min(15).max(480).default(60),
+  location: z
+    .object({
+      lng: z.number().min(-180).max(180),
+      lat: z.number().min(-90).max(90),
+      label: z.string().trim().max(200).optional(),
+    })
+    .optional(),
 });
 
 export const updateBookingStatusSchema = z.object({
