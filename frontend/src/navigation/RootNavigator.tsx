@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { View, Text } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
-import { LinearGradient } from "expo-linear-gradient";
+import { NavigationContainer, useNavigation } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -9,6 +10,8 @@ import { typography, spacing, radii } from "@/theme/tokens";
 import { gradients } from "@/theme/gradients";
 import { AuthNavigator } from "./AuthNavigator";
 import { MainNavigator } from "./MainNavigator";
+import { MapPickerScreen } from "@/screens/map/MapPickerScreen";
+import { RootStackParamList } from "./types";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { setAuthenticated, setUnauthenticated, setHydrating } from "@/redux/slices/authSlice";
 import { tokenStorage } from "@/utils/tokenStorage";
@@ -70,6 +73,44 @@ function SplashScreen() {
   );
 }
 
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+function RootStack() {
+  const { colors } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const status = useAppSelector((s) => s.auth.status);
+
+  // After hydration/login/logout the auth status changes; switch the active
+  // top-level route (Auth <-> Main) so one is never left on the wrong screen.
+  useEffect(() => {
+    if (status === "authenticated") {
+      navigation.reset({ index: 0, routes: [{ name: "Main" }] });
+    } else if (status === "unauthenticated") {
+      navigation.reset({ index: 0, routes: [{ name: "Auth" }] });
+    }
+  }, [status, navigation]);
+
+  return (
+    <Stack.Navigator
+      initialRouteName={status === "authenticated" ? "Main" : "Auth"}
+      screenOptions={{ headerShown: false }}
+    >
+      <Stack.Group>
+        <Stack.Screen name="Auth" component={AuthNavigator} />
+        <Stack.Screen name="Main" component={MainNavigator} />
+      </Stack.Group>
+      <Stack.Screen
+        name="MapPicker"
+        component={MapPickerScreen}
+        options={{
+          headerShown: false,
+          presentation: "modal",
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 export function RootNavigator() {
   const dispatch = useAppDispatch();
   const status = useAppSelector((s) => s.auth.status);
@@ -102,7 +143,7 @@ export function RootNavigator() {
   return (
     <ToastProvider>
       <NavigationContainer>
-        {status === "authenticated" ? <MainNavigator /> : <AuthNavigator />}
+        <RootStack />
       </NavigationContainer>
     </ToastProvider>
   );

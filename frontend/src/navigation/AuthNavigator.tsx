@@ -7,7 +7,7 @@ import { ForgotPasswordScreen } from "@/screens/auth/ForgotPasswordScreen";
 import { VerifyOtpScreen } from "@/screens/auth/VerifyOtpScreen";
 import { ResetPasswordScreen } from "@/screens/auth/ResetPasswordScreen";
 import { useTheme } from "@/theme/ThemeProvider";
-import { typography } from "@/theme/tokens";
+import { getStackScreenOptions } from "./stackOptions";
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -15,13 +15,10 @@ export function AuthNavigator() {
   const { colors } = useTheme();
   return (
     <Stack.Navigator
-      screenOptions={{
+      screenOptions={(props) => ({
+        ...getStackScreenOptions(colors)(props),
         headerShown: false,
-        headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.text,
-        headerTitleStyle: [typography.h4, { color: colors.text }],
-        headerShadowVisible: false,
-      }}
+      })}
     >
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
