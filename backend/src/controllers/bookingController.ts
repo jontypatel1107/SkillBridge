@@ -10,6 +10,7 @@ import {
   ListBookingsQuery,
 } from "../validators/bookingValidators";
 import { notify } from "../services/notificationService";
+import { onBookingCompleted } from "../services/gamificationService";
 
 // Which status transitions are legal, and who is allowed to make them.
 const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
@@ -198,6 +199,10 @@ export async function updateBookingStatus(req: AuthedRequest, res: Response) {
     body: `Your booking status changed to "${nextStatus}"`,
     relatedId: booking._id,
   });
+
+  if (nextStatus === "completed") {
+    await onBookingCompleted({ _id: booking._id, learner: booking.learner, mentor: booking.mentor });
+  }
 
   return ok(res, { booking });
 }

@@ -7,6 +7,7 @@ import { ApiError, ok } from "../utils/apiResponse";
 import { AuthedRequest } from "../middleware/auth";
 import { CreateReviewInput } from "../validators/reviewValidators";
 import { notify } from "../services/notificationService";
+import { onReviewCreated } from "../services/gamificationService";
 
 async function recalculateMentorRating(mentorId: Types.ObjectId | string) {
   const stats = await Review.aggregate([
@@ -59,6 +60,8 @@ export async function createReview(req: AuthedRequest, res: Response) {
     body: `You received a ${rating}-star review`,
     relatedId: review._id,
   });
+
+  await onReviewCreated({ mentor: booking.mentor, rating });
 
   return ok(res, { review }, 201);
 }

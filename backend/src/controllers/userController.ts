@@ -3,8 +3,9 @@ import { Types } from "mongoose";
 import { User } from "../models/User";
 import { ApiError, ok } from "../utils/apiResponse";
 import { AuthedRequest } from "../middleware/auth";
-import { UpdateProfileInput, NearbyQuery } from "../validators/userValidators";
+import { UpdateProfileInput, NearbyQuery, LeaderboardQuery } from "../validators/userValidators";
 import { notify } from "../services/notificationService";
+import { onFollowerGained, getGamificationSummary, levelTitle } from "../services/gamificationService";
 
 export async function updateProfile(req: AuthedRequest, res: Response) {
   const input = req.body as UpdateProfileInput;
@@ -78,6 +79,8 @@ export async function followUser(req: AuthedRequest, res: Response) {
     relatedId: new Types.ObjectId(req.user!.id),
   });
 
+  await onFollowerGained(target._id);
+
   return ok(res, { message: "Followed" });
 }
 
@@ -114,4 +117,31 @@ export async function nearbyMentors(req: AuthedRequest, res: Response) {
     .limit(limit);
 
   return ok(res, { mentors });
+}
+
+export async function myGamification(req: AuthedRequest, res: Response) {
+  const user = await User.findById(req.user!.id);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  return ok(res, getGamificationSummary(user));
+}
+
+export async function leaderboard(req: AuthedRequest, res: Response) {
+  const { limit } = (req as AuthedRequest & { validatedQuery: LeaderboardQuery }).validatedQuery;
+  const users = await User.find({ isSuspended: false })
+    .select("name username avatarUrl xp level role")
+    .sort({ xp: -1 })
+    .limit(limit);
+  const leaderboard = users.map((user) => ({
+    _id: user._id,
+    name: user.name,
+    username: user.username,
+    avatarUrl: user.avatarUrl,
+    role: user.role,
+    xp: user.xp ?? 0,
+    level: user.level ?? 1,
+    levelTitle: levelTitle(user.level ?? 1),
+  }));
+  return ok(res, { leaderboard });
 }

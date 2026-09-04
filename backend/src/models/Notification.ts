@@ -7,7 +7,9 @@ export type NotificationType =
   | "booking_completed"
   | "new_message"
   | "new_review"
-  | "new_follower";
+  | "new_follower"
+  | "badge_unlocked"
+  | "level_up";
 
 export interface INotification extends Document {
   recipient: Types.ObjectId;
@@ -34,6 +36,8 @@ const notificationSchema = new Schema<INotification>(
         "new_message",
         "new_review",
         "new_follower",
+        "badge_unlocked",
+        "level_up",
       ],
     },
     title: { type: String, required: true, maxlength: 120 },

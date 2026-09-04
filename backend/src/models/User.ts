@@ -27,6 +27,14 @@ export interface IUser extends Document {
   isVerified: boolean;
   isSuspended: boolean;
   refreshTokenHash?: string | null;
+  xp: number;
+  level: number;
+  streak: {
+    current: number;
+    longest: number;
+    lastActiveDate: string | null; // "YYYY-MM-DD", UTC
+  };
+  badges: string[]; // badge codes, e.g. "first_session"
   comparePassword(candidate: string): Promise<boolean>;
   createdAt: Date;
   updatedAt: Date;
@@ -77,6 +85,14 @@ const userSchema = new Schema<IUser>(
     isVerified: { type: Boolean, default: false },
     isSuspended: { type: Boolean, default: false },
     refreshTokenHash: { type: String, select: false, default: null },
+    xp: { type: Number, default: 0, min: 0 },
+    level: { type: Number, default: 1, min: 1 },
+    streak: {
+      current: { type: Number, default: 0 },
+      longest: { type: Number, default: 0 },
+      lastActiveDate: { type: String, default: null },
+    },
+    badges: [{ type: String }],
   },
   { timestamps: true }
 );

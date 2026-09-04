@@ -23,5 +23,10 @@ export const nearbyQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 
+export const leaderboardQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type NearbyQuery = z.infer<typeof nearbyQuerySchema>;
+export type LeaderboardQuery = z.infer<typeof leaderboardQuerySchema>;
