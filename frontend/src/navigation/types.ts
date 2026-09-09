@@ -27,6 +27,7 @@ export type ExploreStackParamList = {
 export type BookingsStackParamList = {
   MyBookings: undefined;
   BookingDetail: { bookingId: string };
+  BookingVideoCall: { bookingId: string; userName?: string };
   LeaveReview: { bookingId: string };
 };
 

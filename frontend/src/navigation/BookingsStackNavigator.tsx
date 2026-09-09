@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { BookingsStackParamList } from "./types";
 import { MyBookingsScreen } from "@/screens/bookings/MyBookingsScreen";
 import { BookingDetailScreen } from "@/screens/bookings/BookingDetailScreen";
+import { VideoCallScreen } from "@/screens/chat/VideoCallScreen";
 import { LeaveReviewScreen } from "@/screens/reviews/LeaveReviewScreen";
 import { useTheme } from "@/theme/ThemeProvider";
 import { getStackScreenOptions } from "./stackOptions";
@@ -17,6 +18,7 @@ export function BookingsStackNavigator() {
     >
       <Stack.Screen name="MyBookings" component={MyBookingsScreen} options={{ title: "My Bookings" }} />
       <Stack.Screen name="BookingDetail" component={BookingDetailScreen} options={{ title: "Booking Details", headerBackTitle: "Back" }} />
+      <Stack.Screen name="BookingVideoCall" component={VideoCallScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LeaveReview" component={LeaveReviewScreen} options={{ title: "Leave a Review", headerBackTitle: "Back" }} />
     </Stack.Navigator>
   );

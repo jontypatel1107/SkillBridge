@@ -8,12 +8,21 @@ import { Button } from "@/components/Button";
 import { useAppSelector } from "@/hooks/redux";
 import {
   useGetOrCreateMeetingMutation,
+  useStartBookingMeetingMutation,
   useEndMeetingMutation,
 } from "@/redux/api/meetingsApi";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { ChatStackParamList } from "@/navigation/types";
 
-type Props = NativeStackScreenProps<ChatStackParamList, "VideoCall">;
+// The same screen is registered in both the Chat stack (chat-pair calls) and
+// the Bookings stack (booked sessions). The params differ slightly per host:
+//   - Chat:      { userId, userName }
+//   - Bookings:  { bookingId, userName? }
+type Props = {
+  route: { params: { userId?: string; userName?: string; bookingId?: string } };
+  navigation: {
+    goBack: () => void;
+    setOptions: (options: { title?: string }) => void;
+  };
+};
 
 // Builds the Daily Prebuilt embed inside the WebView. When a meeting token is
 // present we reload the iframe with that token, which authorizes the user even
@@ -56,11 +65,13 @@ const LOADER_HTML = `<!DOCTYPE html><html><head><meta name="viewport" content="w
 
 export function VideoCallScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
-  const { userId, userName } = route.params;
+  const { userId, userName, bookingId } = route.params;
+  const isBookingCall = !!bookingId;
   const currentUser = useAppSelector((s) => s.auth.user);
   const meName = currentUser?.name ?? "Guest";
 
-  const [getOrCreate, { isLoading, error }] = useGetOrCreateMeetingMutation();
+  const [getOrCreate] = useGetOrCreateMeetingMutation();
+  const [startBooking] = useStartBookingMeetingMutation();
   const [endMeeting] = useEndMeetingMutation();
 
   const [roomUrl, setRoomUrl] = useState<string | null>(null);
@@ -69,12 +80,18 @@ export function VideoCallScreen({ route, navigation }: Props) {
   const [joined, setJoined] = useState(false);
 
   useEffect(() => {
-    navigation.setOptions({ title: `${userName}'s meeting` });
-  }, [navigation, userName]);
+    navigation.setOptions({
+      title: isBookingCall ? "Live Session" : `${userName ?? "User"}'s meeting`,
+    });
+  }, [navigation, userName, isBookingCall]);
 
   useEffect(() => {
     let active = true;
-    getOrCreate(userId)
+    const start = isBookingCall && bookingId
+      ? startBooking(bookingId)
+      : getOrCreate(userId!);
+
+    start
       .unwrap()
       .then((meeting) => {
         if (!active) return;
@@ -87,16 +104,18 @@ export function VideoCallScreen({ route, navigation }: Props) {
     return () => {
       active = false;
     };
-  }, [getOrCreate, userId]);
+  }, [getOrCreate, isBookingCall, bookingId, userId, startBooking]);
 
   const onMessage = useCallback((e: WebViewMessageEvent) => {
     if (e.nativeEvent.data === "joined") setJoined(true);
   }, []);
 
   const leave = useCallback(() => {
-    endMeeting(userId).catch(() => {});
+    if (!isBookingCall && userId) {
+      endMeeting(userId).catch(() => {});
+    }
     navigation.goBack();
-  }, [endMeeting, userId, navigation]);
+  }, [isBookingCall, endMeeting, userId, navigation]);
 
   // Once we have the token (fetched with the room), hand it to the iframe by
   // reloading the WebView with the full HTML populated.
@@ -118,14 +137,12 @@ export function VideoCallScreen({ route, navigation }: Props) {
             Could not start the meeting
           </Text>
           <Text style={[typography.body, { color: colors.textMuted, textAlign: "center", marginTop: spacing.xs }]}>
-            {error && "data" in error
-              ? (error.data as { message?: string })?.message
-              : "Please check your connection and try again."}
+            Please check your connection and try again.
           </Text>
           <Button label="Go back" variant="ghost" onPress={leave} style={{ marginTop: spacing.lg }} />
         </View>
       ) : roomUrl ? (
-        <> 
+        <>
           <WebView
             source={{ html }}
             style={styles.flex}

@@ -59,20 +59,14 @@ export function BookingDetailScreen({ route, navigation }: Props) {
   const sessionEnd = sessionStart + booking.durationMinutes * 60 * 1000;
   const joinOpensAt = sessionStart - 15 * 60 * 1000;
   const now = Date.now();
-  const meetingUrl =
-    booking.mode === "online"
-      ? booking.meetingUrl ?? `https://meet.jit.si/skillbridge-${booking._id}`
-      : undefined;
   const canJoinMeeting =
     booking.status === "confirmed" &&
     booking.mode === "online" &&
-    !!meetingUrl &&
     now >= joinOpensAt &&
     now <= sessionEnd;
   const meetingPending =
     booking.status === "confirmed" &&
     booking.mode === "online" &&
-    !!meetingUrl &&
     now < joinOpensAt;
 
   const bookingLoc = booking.location;
@@ -177,7 +171,12 @@ export function BookingDetailScreen({ route, navigation }: Props) {
         {canJoinMeeting ? (
           <Button
             label="Join Online Meeting"
-            onPress={() => Linking.openURL(meetingUrl!)}
+            onPress={() =>
+              navigation.navigate("BookingVideoCall", {
+                bookingId: booking._id,
+                userName: otherParty?.name,
+              })
+            }
           />
         ) : null}
         {meetingPending ? (

@@ -21,10 +21,6 @@ const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   expired: ["completed", "cancelled"],
 };
 
-function buildMeetingUrl(bookingId: Types.ObjectId | string): string {
-  return `https://meet.jit.si/skillbridge-${bookingId.toString()}`;
-}
-
 async function expireStaleConfirmedBookings(userId?: string) {
   const filter: Record<string, unknown> = {
     status: "confirmed",
@@ -73,11 +69,9 @@ export async function createBooking(req: AuthedRequest, res: Response) {
         : undefined,
   });
 
-  if (mode === "online") {
-    booking.meetingUrl = buildMeetingUrl(booking._id);
-    await booking.save();
-  }
-
+  // Online meeting rooms are created on demand at join time
+  // (POST /api/meetings/booking/:bookingId/start) so the room expires relative
+  // to the booked start rather than pre-assigning a static Jitsi URL.
   await notify({
     recipient: skill.mentor,
     type: "booking_requested",
