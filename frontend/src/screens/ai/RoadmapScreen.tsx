@@ -16,13 +16,17 @@ import { getShadow } from "@/theme/shadows";
 import { gradients } from "@/theme/gradients";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
+import { Chip } from "@/components/Chip";
 import { EmptyState } from "@/components/EmptyState";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { useGenerateRoadmapMutation, useMyRoadmapsQuery, LearningPlan } from "@/redux/api/aiApi";
 
+const DURATION_OPTIONS = [30, 60, 90, 180, 365];
+
 export function RoadmapScreen() {
   const { colors } = useTheme();
   const [goal, setGoal] = useState("");
+  const [durationDays, setDurationDays] = useState(60);
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
   const [generate, { isLoading, error }] = useGenerateRoadmapMutation();
   const { data: plans, refetch } = useMyRoadmapsQuery();
@@ -30,7 +34,7 @@ export function RoadmapScreen() {
   const onGenerate = async () => {
     if (!goal.trim()) return;
     try {
-      await generate({ goal: goal.trim() }).unwrap();
+      await generate({ goal: goal.trim(), durationDays }).unwrap();
       setGoal("");
       refetch();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -77,6 +81,22 @@ export function RoadmapScreen() {
               value={goal}
               onChangeText={setGoal}
             />
+
+            <View>
+              <Text style={[typography.caption, { color: colors.textMuted }]}>
+                How long do you want to learn?
+              </Text>
+              <View style={styles.durationRow}>
+                {DURATION_OPTIONS.map((days) => (
+                  <Chip
+                    key={days}
+                    label={`${days}d`}
+                    selected={durationDays === days}
+                    onPress={() => setDurationDays(days)}
+                  />
+                ))}
+              </View>
+            </View>
 
             {serverError ? (
               <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
@@ -278,6 +298,12 @@ const styles = StyleSheet.create({
   primaryAction: {
     marginTop: spacing.xs,
     width: "100%",
+  },
+  durationRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    flexWrap: "wrap",
   },
   errorBox: {
     flexDirection: "row",
