@@ -16,6 +16,7 @@ import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Avatar } from "@/components/Avatar";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { chatApi, useConversationHistoryQuery, ChatMessage } from "@/redux/api/chatApi";
 import { connectSocket } from "@/services/socket";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
@@ -80,7 +81,7 @@ export function ConversationScreen({ route, navigation }: Props) {
         <View style={styles.headerTitle}>
           <View style={styles.headerAvatarWrap}>
             <Avatar uri={undefined} name={userName} size={38} />
-            {online ? <View style={styles.headerOnlineDot} /> : null}
+            {online ? <View style={[styles.headerOnlineDot, { backgroundColor: colors.success, borderColor: colors.surface }]} /> : null}
           </View>
           <View>
             <Text style={[typography.h4, { color: colors.text }]} numberOfLines={1}>
@@ -247,7 +248,7 @@ export function ConversationScreen({ route, navigation }: Props) {
               styles.bubble,
               isMine
                 ? {
-                    backgroundColor: "#DCF8C6",
+                    backgroundColor: colors.primary,
                     borderTopRightRadius: groupedWithPrev ? 6 : radii.md,
                     borderBottomRightRadius: groupedWithNext ? 6 : radii.md,
                   }
@@ -259,14 +260,14 @@ export function ConversationScreen({ route, navigation }: Props) {
                   },
             ]}
           >
-            <Text style={[typography.body, { color: isMine ? "#1A2412" : colors.text, lineHeight: 21 }]}>
+            <Text style={[typography.body, { color: isMine ? "#FFFFFF" : colors.text, lineHeight: 21 }]}>
               {item.text}
             </Text>
             <View style={styles.bubbleMeta}>
               {isMine ? (
-                <Feather name="check" size={13} color="#82966E" />
+                <Feather name="check" size={13} color="rgba(255,255,255,0.8)" />
               ) : null}
-              <Text style={[typography.tiny, { color: isMine ? "#82966E" : colors.textMuted }]}>
+              <Text style={[typography.tiny, { color: isMine ? "rgba(255,255,255,0.8)" : colors.textMuted }]}>
                 {formatBubbleTime(item.createdAt)}
               </Text>
             </View>
@@ -277,11 +278,14 @@ export function ConversationScreen({ route, navigation }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={[styles.flex, { backgroundColor: colors.background }]}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.flex}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
       <FlatList
         ref={listRef}
         style={styles.flex}
@@ -295,7 +299,7 @@ export function ConversationScreen({ route, navigation }: Props) {
 
       {/* Typing indicator */}
       {isTyping ? (
-        <View style={[styles.typingContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.typingContainer, { backgroundColor: colors.surface }]}>
           <View style={[styles.typingBubble, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.typingDots}>
               {[0, 1, 2].map((i) => (
@@ -314,7 +318,7 @@ export function ConversationScreen({ route, navigation }: Props) {
         style={[
           styles.inputContainer,
           {
-            backgroundColor: colors.background,
+            backgroundColor: colors.surface,
             borderTopColor: colors.border,
             paddingBottom: keyboardOpen
               ? (Platform.OS === "ios" ? 0 : keyboardHeight) + spacing.md
@@ -338,7 +342,7 @@ export function ConversationScreen({ route, navigation }: Props) {
                 onPress={send}
                 style={({ pressed }) => [
                   styles.sendButton,
-                  { opacity: pressed ? 0.85 : 1 },
+                  { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
                 ]}
               >
                 <Feather name="arrow-up" size={20} color="#FFFFFF" />
@@ -356,7 +360,9 @@ export function ConversationScreen({ route, navigation }: Props) {
           </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -378,9 +384,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#16A34A",
     borderWidth: 2,
-    borderColor: "#fff",
   },
   videoCallButton: {
     width: 40,
@@ -501,7 +505,6 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "#25D366",
     alignItems: "center",
     justifyContent: "center",
   },

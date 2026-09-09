@@ -4,7 +4,7 @@ import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeIn, ZoomIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { typography, spacing, radii } from "@/theme/tokens";
 import { gradients } from "@/theme/gradients";
@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { setAuthenticated, setUnauthenticated, setHydrating } from "@/redux/slices/authSlice";
 import { tokenStorage } from "@/utils/tokenStorage";
 import { useMeQuery } from "@/redux/api/authApi";
+import { startAuthTimer, stopAuthTimer } from "@/redux/api/baseApi";
 import { ToastProvider } from "@/components/Toast";
 
 function SplashScreen() {
@@ -39,7 +40,7 @@ function SplashScreen() {
         </LinearGradient>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(300).duration(500)}>
+      <Animated.View entering={FadeIn.duration(400)}>
         <Text
           style={[
             typography.h1,
@@ -50,13 +51,13 @@ function SplashScreen() {
         </Text>
       </Animated.View>
 
-      <Animated.View entering={FadeInUp.delay(500).duration(400)}>
+      <Animated.View entering={FadeIn.duration(400)}>
         <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.sm }]}>
           Learn. Teach. Earn.
         </Text>
       </Animated.View>
 
-      <Animated.View entering={FadeIn.delay(800).duration(400)} style={{ marginTop: spacing.xl }}>
+      <Animated.View entering={FadeIn.duration(400)} style={{ marginTop: spacing.xl }}>
         <Animated.View
           style={{
             width: 24,
@@ -126,15 +127,38 @@ export function RootNavigator() {
     })();
   }, [dispatch]);
 
-  const { data: user, isError, isSuccess } = useMeQuery(undefined, { skip: !hasToken });
+  const { data: user, isError, isSuccess, error } = useMeQuery(undefined, {
+    skip: !hasToken,
+    pollingInterval: 0,
+  });
 
   useEffect(() => {
-    if (isSuccess && user) dispatch(setAuthenticated(user));
-    if (isError) {
-      tokenStorage.clear();
+    if (isSuccess && user) {
+      dispatch(setAuthenticated(user));
+      startAuthTimer(dispatch);
+      return;
+    }
+    if (isError && error) {
+      if ("status" in error && error.status === 401) {
+        tokenStorage.clear();
+      }
+      // baseApi already retried FETCH_ERROR (3x w/ backoff + server-url reset).
+      // Always escape hydrating so the splash never stays frozen on the screen.
       dispatch(setUnauthenticated());
     }
-  }, [isSuccess, isError, user, dispatch]);
+  }, [isSuccess, isError, error, user, dispatch]);
+
+  useEffect(() => {
+    return () => stopAuthTimer();
+  }, []);
+
+  useEffect(() => {
+    if (status !== "idle" && status !== "hydrating") return;
+    const watchdog = setTimeout(() => {
+      dispatch(setUnauthenticated());
+    }, 12000);
+    return () => clearTimeout(watchdog);
+  }, [status, dispatch]);
 
   if (status === "idle" || status === "hydrating") {
     return <SplashScreen />;

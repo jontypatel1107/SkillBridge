@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,6 +19,7 @@ import { spacing, typography, radii } from "@/theme/tokens";
 import { gradients } from "@/theme/gradients";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useRegisterMutation } from "@/redux/api/authApi";
 import { tokenStorage } from "@/utils/tokenStorage";
 import { useAppDispatch } from "@/hooks/redux";
@@ -74,183 +75,188 @@ export function SignupScreen({ navigation }: Props) {
     error && "data" in error ? (error.data as { message?: string })?.message : undefined;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={[styles.flex, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Branding */}
-        <Animated.View entering={FadeInDown.duration(500)}>
-          <LinearGradient
-            colors={gradients.hero.colors as any}
-            start={gradients.hero.start}
-            end={gradients.hero.end}
-            style={styles.branding}
+    <View style={styles.flex}>
+      <ScreenBackground mood="auth" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.flex}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            <Feather name="zap" size={32} color="#FFFFFF" />
-            <Text style={styles.brandName}>SkillBridge</Text>
-            <Text style={styles.brandTagline}>Learn. Teach. Earn.</Text>
-          </LinearGradient>
-        </Animated.View>
+            {/* Branding */}
+            <View>
+              <LinearGradient
+                colors={gradients.hero.colors as any}
+                start={gradients.hero.start}
+                end={gradients.hero.end}
+                style={styles.branding}
+              >
+                <Feather name="zap" size={32} color="#FFFFFF" />
+                <Text style={styles.brandName}>SkillBridge</Text>
+                <Text style={styles.brandTagline}>Learn. Teach. Earn.</Text>
+              </LinearGradient>
+            </View>
 
-        {/* Form */}
-        <Animated.View entering={FadeInDown.delay(150).duration(400)}>
-          <Text style={[typography.h1, { color: colors.text, marginTop: spacing.xxl }]}>
-            Create your account
-          </Text>
-          <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs }]}>
-            Start your learning or teaching journey.
-          </Text>
-        </Animated.View>
+            {/* Form */}
+            <View>
+              <Text style={[typography.h1, { color: colors.text, marginTop: spacing.xxl }]}>
+                Create your account
+              </Text>
+              <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs }]}>
+                Start your learning or teaching journey.
+              </Text>
+            </View>
 
-        {/* Role Toggle */}
-        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <View style={styles.roleContainer}>
-            {([
-              { key: "student" as const, icon: "book-open", label: "I want to learn" },
-              { key: "mentor" as const, icon: "award", label: "I want to teach" },
-            ]).map((r) => {
-              const isActive = role === r.key;
-              return (
-                <Pressable
-                  key={r.key}
-                  onPress={() => setRole(r.key)}
-                  style={[
-                    styles.roleCard,
-                    {
-                      backgroundColor: isActive ? colors.primaryMuted : colors.surface,
-                      borderColor: isActive ? colors.primary : colors.border,
-                    },
-                  ]}
-                >
-                  <Feather
-                    name={r.icon as any}
-                    size={20}
-                    color={isActive ? colors.primary : colors.textMuted}
-                  />
-                  <Text
-                    style={[
-                      typography.bodyMedium,
-                      { color: isActive ? colors.primary : colors.textMuted, marginTop: 4 },
-                    ]}
-                  >
-                    {r.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <View style={styles.formSection}>
-            <Controller
-              control={control}
-              name="name"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextField
-                  label="Full name"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  error={errors.name?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="username"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextField
-                  label="Username"
-                  autoCapitalize="none"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  error={errors.username?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextField
-                  label="Email"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  textContentType="username"
-                  autoComplete="username"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  error={errors.email?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextField
-                  label="Password"
-                  secureTextEntry
-                  textContentType="password"
-                  autoComplete="password"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  error={errors.password?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="confirmPassword"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextField
-                  label="Confirm password"
-                  secureTextEntry
-                  textContentType="password"
-                  autoComplete="password"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  error={errors.confirmPassword?.message}
-                />
-              )}
-            />
-
-            {serverError ? (
-              <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
-                <Feather name="alert-circle" size={16} color={colors.danger} />
-                <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
-                  {serverError}
-                </Text>
+            {/* Role Toggle */}
+            <View>
+              <View style={styles.roleContainer}>
+                {([
+                  { key: "student" as const, icon: "book-open", label: "I want to learn" },
+                  { key: "mentor" as const, icon: "award", label: "I want to teach" },
+                ]).map((r) => {
+                  const isActive = role === r.key;
+                  return (
+                    <Pressable
+                      key={r.key}
+                      onPress={() => setRole(r.key)}
+                      style={[
+                        styles.roleCard,
+                        {
+                          backgroundColor: isActive ? colors.primaryMuted : colors.surface,
+                          borderColor: isActive ? colors.primary : colors.border,
+                        },
+                      ]}
+                    >
+                      <Feather
+                        name={r.icon as any}
+                        size={20}
+                        color={isActive ? colors.primary : colors.textMuted}
+                      />
+                      <Text
+                        style={[
+                          typography.bodyMedium,
+                          { color: isActive ? colors.primary : colors.textMuted, marginTop: 4 },
+                        ]}
+                      >
+                        {r.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
-            ) : null}
+            </View>
 
-            <Button
-              label="Create Account"
-              onPress={handleSubmit(onSubmit)}
-              loading={isLoading}
-            />
-          </View>
-        </Animated.View>
+            <View>
+              <View style={styles.formSection}>
+                <Controller
+                  control={control}
+                  name="name"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextField
+                      label="Full name"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={errors.name?.message}
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="username"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextField
+                      label="Username"
+                      autoCapitalize="none"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={errors.username?.message}
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextField
+                      label="Email"
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      textContentType="username"
+                      autoComplete="username"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={errors.email?.message}
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextField
+                      label="Password"
+                      secureTextEntry
+                      textContentType="password"
+                      autoComplete="password"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={errors.password?.message}
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="confirmPassword"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextField
+                      label="Confirm password"
+                      secureTextEntry
+                      textContentType="password"
+                      autoComplete="password"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={errors.confirmPassword?.message}
+                    />
+                  )}
+                />
 
-        <Animated.View entering={FadeInDown.delay(400).duration(400)}>
-          <Button
-            label="Already have an account? Log in"
-            variant="ghost"
-            onPress={() => navigation.navigate("Login")}
-          />
-        </Animated.View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+                {serverError ? (
+                  <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
+                    <Feather name="alert-circle" size={16} color={colors.danger} />
+                    <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
+                      {serverError}
+                    </Text>
+                  </View>
+                ) : null}
+
+                <Button
+                  label="Create Account"
+                  onPress={handleSubmit(onSubmit)}
+                  loading={isLoading}
+                />
+              </View>
+            </View>
+
+            <View>
+              <Button
+                label="Already have an account? Log in"
+                variant="ghost"
+                onPress={() => navigation.navigate("Login")}
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 }
 

@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,6 +16,7 @@ import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useResetPasswordMutation } from "@/redux/api/authApi";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "@/navigation/types";
@@ -53,77 +54,82 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
     error && "data" in error ? (error.data as { message?: string })?.message : undefined;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={[styles.flex, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Animated.View entering={FadeInDown.duration(400)}>
-          <View style={[styles.iconWrap, { backgroundColor: colors.success + "18" }]}>
-            <Feather name="key" size={32} color={colors.success} />
-          </View>
-          <Text style={[typography.h2, { color: colors.text, marginTop: spacing.xl }]}>
-            Set new password
-          </Text>
-          <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs }]}>
-            Choose a strong password for your account.
-          </Text>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <View style={styles.formSection}>
-            <Controller
-              control={control}
-              name="newPassword"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextField
-                  label="New password"
-                  secureTextEntry
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  error={errors.newPassword?.message}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="confirmPassword"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextField
-                  label="Confirm password"
-                  secureTextEntry
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  error={errors.confirmPassword?.message}
-                />
-              )}
-            />
-
-            {serverError ? (
-              <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
-                <Feather name="alert-circle" size={16} color={colors.danger} />
-                <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
-                  {serverError}
-                </Text>
+    <View style={styles.flex}>
+      <ScreenBackground mood="auth" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.flex}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View>
+              <View style={[styles.iconWrap, { backgroundColor: colors.success + "18" }]}>
+                <Feather name="key" size={32} color={colors.success} />
               </View>
-            ) : null}
+              <Text style={[typography.h2, { color: colors.text, marginTop: spacing.xl }]}>
+                Set new password
+              </Text>
+              <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs }]}>
+                Choose a strong password for your account.
+              </Text>
+            </View>
 
-            <Button
-              label="Reset Password"
-              onPress={handleSubmit(onSubmit)}
-              loading={isLoading}
-            />
-          </View>
-        </Animated.View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <View>
+              <View style={styles.formSection}>
+                <Controller
+                  control={control}
+                  name="newPassword"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextField
+                      label="New password"
+                      secureTextEntry
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={errors.newPassword?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="confirmPassword"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextField
+                      label="Confirm password"
+                      secureTextEntry
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={errors.confirmPassword?.message}
+                    />
+                  )}
+                />
+
+                {serverError ? (
+                  <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
+                    <Feather name="alert-circle" size={16} color={colors.danger} />
+                    <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
+                      {serverError}
+                    </Text>
+                  </View>
+                ) : null}
+
+                <Button
+                  label="Reset Password"
+                  onPress={handleSubmit(onSubmit)}
+                  loading={isLoading}
+                />
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 }
 

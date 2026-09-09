@@ -55,8 +55,5 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.caption,
-    textTransform: "capitalize",
-    fontWeight: "700",
-    letterSpacing: 0.15,
   },
 });

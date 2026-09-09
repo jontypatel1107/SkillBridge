@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
@@ -17,6 +17,7 @@ import { gradients } from "@/theme/gradients";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useGenerateRoadmapMutation, useMyRoadmapsQuery, LearningPlan } from "@/redux/api/aiApi";
 
 export function RoadmapScreen() {
@@ -42,87 +43,91 @@ export function RoadmapScreen() {
     error && "data" in error ? (error.data as { message?: string })?.message : undefined;
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* AI Hero */}
-      <Animated.View entering={FadeInDown.duration(400)}>
-        <LinearGradient
-          colors={gradients.hero.colors as any}
-          start={gradients.hero.start}
-          end={gradients.hero.end}
-          style={styles.hero}
-        >
-          <View style={styles.heroBadge}>
-            <Feather name="cpu" size={22} color="rgba(255,255,255,0.9)" />
-          </View>
-          <Text style={styles.heroTitle}>Your AI Learning Coach</Text>
-          <Text style={styles.heroSubtitle}>
-            Tell me what you want to learn and I'll build a personalized roadmap.
-          </Text>
-        </LinearGradient>
-      </Animated.View>
-
-      {/* Input */}
-      <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-        <View style={[styles.inputCard, getShadow(colors, "md"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <TextField
-            label="What do you want to learn?"
-            placeholder="e.g. Become a React Native developer"
-            value={goal}
-            onChangeText={setGoal}
-          />
-
-          {serverError ? (
-            <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
-              <Feather name="alert-circle" size={14} color={colors.danger} />
-              <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
-                {serverError}
-              </Text>
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* AI Hero */}
+        <View>
+          <LinearGradient
+            colors={gradients.hero.colors as any}
+            start={gradients.hero.start}
+            end={gradients.hero.end}
+            style={styles.hero}
+          >
+            <View style={styles.heroBadge}>
+              <Feather name="cpu" size={22} color="rgba(255,255,255,0.9)" />
             </View>
-          ) : null}
-
-          <Button
-            label="Build My Roadmap"
-            onPress={onGenerate}
-            loading={isLoading}
-            style={styles.primaryAction}
-            icon={!isLoading ? <Feather name="zap" size={18} color="#FFFFFF" /> : undefined}
-          />
+            <Text style={styles.heroTitle}>Your AI Learning Coach</Text>
+            <Text style={styles.heroSubtitle}>
+              Tell me what you want to learn and I'll build a personalized roadmap.
+            </Text>
+          </LinearGradient>
         </View>
+
+        {/* Input */}
+        <View>
+          <View style={[styles.inputCard, getShadow(colors, "md"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <TextField
+              label="What do you want to learn?"
+              placeholder="e.g. Become a React Native developer"
+              value={goal}
+              onChangeText={setGoal}
+            />
+
+            {serverError ? (
+              <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
+                <Feather name="alert-circle" size={14} color={colors.danger} />
+                <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
+                  {serverError}
+                </Text>
+              </View>
+            ) : null}
+
+            <Button
+              label="Build My Roadmap"
+              onPress={onGenerate}
+              loading={isLoading}
+              style={styles.primaryAction}
+              icon={!isLoading ? <Feather name="zap" size={18} color="#FFFFFF" /> : undefined}
+            />
+          </View>
+        </View>
+
+        {/* Roadmaps */}
+        <View>
+          <Text style={[typography.h3, { color: colors.text, marginTop: spacing.xl, marginBottom: spacing.md }]}>
+            Your Roadmaps
+          </Text>
+
+          {plans && plans.length > 0 ? (
+            plans.map((plan) => (
+              <View key={plan._id}>
+                <RoadmapCard
+                  plan={plan}
+                  expanded={expandedPlan === plan._id}
+                  onToggle={() =>
+                    setExpandedPlan(expandedPlan === plan._id ? null : plan._id)
+                  }
+                />
+              </View>
+            ))
+          ) : (
+            <EmptyState
+              icon="🗺️"
+              title="No roadmaps yet"
+              subtitle="Describe your learning goal above to generate your first roadmap."
+            />
+          )}
+        </View>
+
+        <View style={{ height: spacing.xxl }} />
+      </ScrollView>
       </Animated.View>
-
-      {/* Roadmaps */}
-      <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-        <Text style={[typography.h3, { color: colors.text, marginTop: spacing.xl, marginBottom: spacing.md }]}>
-          Your Roadmaps
-        </Text>
-
-        {plans && plans.length > 0 ? (
-          plans.map((plan, index) => (
-            <Animated.View key={plan._id} entering={FadeInDown.delay(300 + index * 80).duration(300)}>
-              <RoadmapCard
-                plan={plan}
-                expanded={expandedPlan === plan._id}
-                onToggle={() =>
-                  setExpandedPlan(expandedPlan === plan._id ? null : plan._id)
-                }
-              />
-            </Animated.View>
-          ))
-        ) : (
-          <EmptyState
-            icon="🗺️"
-            title="No roadmaps yet"
-            subtitle="Describe your learning goal above to generate your first roadmap."
-          />
-        )}
-      </Animated.View>
-
-      <View style={{ height: spacing.xxl }} />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -228,6 +233,7 @@ function RoadmapCard({
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
 
   // Hero

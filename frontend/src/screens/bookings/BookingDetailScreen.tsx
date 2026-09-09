@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
@@ -19,6 +19,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Avatar } from "@/components/Avatar";
 import { Divider } from "@/components/Divider";
 import { LocationMap } from "@/components/LocationMap";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useGetBookingQuery, useUpdateBookingStatusMutation } from "@/redux/api/bookingsApi";
 import { useAppSelector } from "@/hooks/redux";
 import { Skill, User } from "@/types";
@@ -38,7 +39,7 @@ export function BookingDetailScreen({ route, navigation }: Props) {
 
   if (isLoading || !booking) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
+      <View style={styles.center}>
         <ActivityIndicator color={colors.primary} />
       </View>
     );
@@ -83,13 +84,16 @@ export function BookingDetailScreen({ route, navigation }: Props) {
     : undefined;
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header Card */}
-      <Animated.View entering={FadeInDown.duration(400)}>
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <ScrollView
+          style={styles.flex}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header Card */}
+          <View>
         <View style={[styles.headerCard, getShadow(colors, "md"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.headerTop}>
             <Text style={[typography.h2, { color: colors.text, flex: 1 }]}>
@@ -107,10 +111,10 @@ export function BookingDetailScreen({ route, navigation }: Props) {
             <InfoItem icon="timer" label="Duration" value={`${booking.durationMinutes} min`} colors={colors} />
           </View>
         </View>
-      </Animated.View>
+      </View>
 
       {/* Participants */}
-      <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+      <View>
         <View style={[styles.participantsCard, getShadow(colors, "sm"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>Participants</Text>
           {mentor ? (
@@ -133,11 +137,11 @@ export function BookingDetailScreen({ route, navigation }: Props) {
             </View>
           ) : null}
         </View>
-      </Animated.View>
+      </View>
 
       {/* Offline Location */}
       {booking.mode === "offline" && bookingLoc ? (
-        <Animated.View entering={FadeInDown.delay(150).duration(400)}>
+        <View>
           <View style={[styles.participantsCard, getShadow(colors, "sm"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>
               Meeting Location
@@ -165,11 +169,11 @@ export function BookingDetailScreen({ route, navigation }: Props) {
               />
             ) : null}
           </View>
-        </Animated.View>
+        </View>
       ) : null}
 
       {/* Actions */}
-      <Animated.View entering={FadeInDown.delay(200).duration(400)} style={{ marginTop: spacing.xl }}>
+      <View style={{ marginTop: spacing.xl }}>
         {canJoinMeeting ? (
           <Button
             label="Join Online Meeting"
@@ -219,10 +223,12 @@ export function BookingDetailScreen({ route, navigation }: Props) {
             onPress={() => navigation.navigate("LeaveReview", { bookingId: booking._id })}
           />
         ) : null}
-      </Animated.View>
+      </View>
 
       <View style={{ height: spacing.xxl }} />
-    </ScrollView>
+        </ScrollView>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -231,7 +237,7 @@ function InfoItem({ icon, label, value, colors }: { icon: string; label: string;
     <View style={styles.infoItem}>
       <Feather name={icon as any} size={16} color={colors.primary} />
       <View style={{ marginLeft: spacing.sm }}>
-        <Text style={[typography.tiny, { color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }]}>{label}</Text>
+        <Text style={[typography.tiny, { color: colors.textMuted, letterSpacing: 0.5 }]}>{label}</Text>
         <Text style={[typography.bodyMedium, { color: colors.text, textTransform: "capitalize" }]}>{value}</Text>
       </View>
     </View>
@@ -239,6 +245,7 @@ function InfoItem({ icon, label, value, colors }: { icon: string; label: string;
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
 

@@ -9,11 +9,12 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
 import { categoryGradients } from "@/theme/gradients";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { Button } from "@/components/Button";
 import { Avatar } from "@/components/Avatar";
 import { Divider } from "@/components/Divider";
@@ -36,8 +37,11 @@ export function SkillDetailScreen({ route, navigation }: Props) {
 
   if (isLoading || !skill) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} />
+      <View style={styles.flex}>
+        <ScreenBackground mood="chat" />
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
       </View>
     );
   }
@@ -55,118 +59,121 @@ export function SkillDetailScreen({ route, navigation }: Props) {
   };
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.topBar}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Feather name="chevron-left" size={28} color="#F8FAFC" />
-          </Pressable>
-          <Text style={styles.pageTitle}>Skill Details</Text>
-        </View>
-
-        <LinearGradient
-          colors={grad.colors as any}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <View style={styles.heroContent}>
-            <View style={styles.heroTopRow}>
-              <View style={styles.categoryBadge}>
-                <Text style={styles.categoryText}>{skill.category}</Text>
-              </View>
-              <View style={styles.priceBadge}>
-                <Text style={styles.priceText}>{priceLabel.split("/")[0]}</Text>
-                <Text style={styles.priceUnit}>/hr</Text>
-              </View>
-            </View>
-            <Text style={styles.heroTitle}>{skill.title}</Text>
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.topBar}>
+            <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Feather name="chevron-left" size={28} color="#F8FAFC" />
+            </Pressable>
+            <Text style={styles.pageTitle}>Skill Details</Text>
           </View>
-        </LinearGradient>
 
-        {mentor ? (
-          <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-            <View style={styles.section}>
-              <View style={[styles.mentorCard, getShadow(colors, "md"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <View style={styles.bookingPanel}>
-                  <Pressable
-                    onPress={openChat}
-                    style={({ pressed }) => [
-                      styles.bookingButton,
-                      styles.darkButton,
-                      { opacity: pressed ? 0.9 : 1 },
-                    ]}
-                  >
-                    <Feather name="message-circle" size={20} color="#F8FAFC" />
-                    <Text style={styles.bookingButtonText}>Message</Text>
-                  </Pressable>
+          <LinearGradient
+            colors={grad.colors as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          >
+            <View style={styles.heroContent}>
+              <View style={styles.heroTopRow}>
+                <View style={styles.categoryBadge}>
+                  <Text style={styles.categoryText}>{skill.category}</Text>
+                </View>
+                <View style={styles.priceBadge}>
+                  <Text style={styles.priceText}>{priceLabel.split("/")[0]}</Text>
+                  <Text style={styles.priceUnit}>/hr</Text>
+                </View>
+              </View>
+              <Text style={styles.heroTitle}>{skill.title}</Text>
+            </View>
+          </LinearGradient>
 
-                  <Pressable
-                    onPress={() => navigation.navigate("BookSession", { skillId })}
-                    style={({ pressed }) => [
-                      styles.bookingButton,
-                      styles.primaryButton,
-                      { opacity: pressed ? 0.92 : 1 },
-                    ]}
-                  >
-                    <Feather name="calendar" size={20} color="#FFFFFF" />
-                    <Text style={styles.bookingButtonText}>Book Session</Text>
-                  </Pressable>
+          {mentor ? (
+            <View>
+              <View style={styles.section}>
+                <View style={[styles.mentorCard, getShadow(colors, "md"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <View style={styles.bookingPanel}>
+                    <Pressable
+                      onPress={openChat}
+                      style={({ pressed }) => [
+                        styles.bookingButton,
+                        styles.darkButton,
+                        { opacity: pressed ? 0.9 : 1 },
+                      ]}
+                    >
+                      <Feather name="message-circle" size={20} color="#F8FAFC" />
+                      <Text style={styles.bookingButtonText}>Message</Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => navigation.navigate("BookSession", { skillId })}
+                      style={({ pressed }) => [
+                        styles.bookingButton,
+                        styles.primaryButton,
+                        { opacity: pressed ? 0.92 : 1 },
+                      ]}
+                    >
+                      <Feather name="calendar" size={20} color="#FFFFFF" />
+                      <Text style={styles.bookingButtonText}>Book Session</Text>
+                    </Pressable>
+                  </View>
                 </View>
               </View>
             </View>
-          </Animated.View>
-        ) : null}
+          ) : null}
 
-        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <View style={styles.section}>
-            <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>About this skill</Text>
-            <Text style={[typography.body, { color: colors.textMuted, lineHeight: 24 }]}>{skill.description}</Text>
-          </View>
-        </Animated.View>
-
-        {skill.tags && skill.tags.length > 0 ? (
-          <Animated.View entering={FadeInDown.delay(250).duration(400)}>
+          <View>
             <View style={styles.section}>
-              <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>Topics covered</Text>
-              <View style={styles.tagsContainer}>
-                {skill.tags.map((tag) => (
-                  <View key={tag} style={[styles.tag, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
-                    <Text style={[typography.caption, { color: colors.textMuted }]}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
+              <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>About this skill</Text>
+              <Text style={[typography.body, { color: colors.textMuted, lineHeight: 24 }]}>{skill.description}</Text>
             </View>
-          </Animated.View>
-        ) : null}
+          </View>
 
-        <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <View style={styles.section}>
-            <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>{"Reviews " + (reviews ? "(" + reviews.length + ")" : "")}</Text>
-            {reviews && reviews.length > 0 ? (
-              reviews.slice(0, 5).map((r) => (
-                <View key={r._id} style={[styles.reviewCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                  <View style={styles.reviewHeader}>
-                    <View style={styles.starsRow}>
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Feather key={s} name="star" size={14} color={s <= r.rating ? colors.warning : colors.border} style={{ marginRight: 2 }} />
-                      ))}
+          {skill.tags && skill.tags.length > 0 ? (
+            <View>
+              <View style={styles.section}>
+                <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>Topics covered</Text>
+                <View style={styles.tagsContainer}>
+                  {skill.tags.map((tag) => (
+                    <View key={tag} style={[styles.tag, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
+                      <Text style={[typography.caption, { color: colors.textMuted }]}>{tag}</Text>
                     </View>
-                    <Text style={[typography.tiny, { color: colors.textMuted }]}>{new Date(r.createdAt).toLocaleDateString()}</Text>
-                  </View>
-                  {r.comment ? (
-                    <Text style={[typography.bodySmall, { color: colors.textMuted, marginTop: spacing.sm }]}>{r.comment}</Text>
-                  ) : null}
+                  ))}
                 </View>
-              ))
-            ) : (
-              <Text style={[typography.body, { color: colors.textMuted }]}>No reviews yet. Be the first to book this skill.</Text>
-            )}
-          </View>
-        </Animated.View>
+              </View>
+            </View>
+          ) : null}
 
-        <View style={{ height: 80 }} />
-      </ScrollView>
+          <View>
+            <View style={styles.section}>
+              <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>{"Reviews " + (reviews ? "(" + reviews.length + ")" : "")}</Text>
+              {reviews && reviews.length > 0 ? (
+                reviews.slice(0, 5).map((r) => (
+                  <View key={r._id} style={[styles.reviewCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <View style={styles.reviewHeader}>
+                      <View style={styles.starsRow}>
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Feather key={s} name="star" size={14} color={s <= r.rating ? colors.warning : colors.border} style={{ marginRight: 2 }} />
+                        ))}
+                      </View>
+                      <Text style={[typography.tiny, { color: colors.textMuted }]}>{new Date(r.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                    {r.comment ? (
+                      <Text style={[typography.bodySmall, { color: colors.textMuted, marginTop: spacing.sm }]}>{r.comment}</Text>
+                    ) : null}
+                  </View>
+                ))
+              ) : (
+                <Text style={[typography.body, { color: colors.textMuted }]}>No reviews yet. Be the first to book this skill.</Text>
+              )}
+            </View>
+          </View>
+
+          <View style={{ height: 80 }} />
+        </ScrollView>
+      </Animated.View>
     </View>
   );
 }
@@ -237,7 +244,6 @@ const styles = StyleSheet.create({
   categoryText: {
     ...typography.small,
     color: "#FFFFFF",
-    textTransform: "uppercase",
     letterSpacing: 0.8,
     fontWeight: "700",
   },

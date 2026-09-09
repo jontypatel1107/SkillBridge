@@ -7,13 +7,14 @@ import {
   Pressable,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { SkeletonCard } from "@/components/Skeleton";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useMyBookingsQuery } from "@/redux/api/bookingsApi";
 import { Booking, BookingStatus, Skill, User } from "@/types";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -38,9 +39,11 @@ export function MyBookingsScreen({ navigation }: Props) {
   );
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      {/* Filters */}
-      <View style={[styles.filterContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        {/* Filters */}
+        <View style={[styles.filterContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -100,17 +103,18 @@ export function MyBookingsScreen({ navigation }: Props) {
             />
           }
           renderItem={({ item, index }) => (
-            <Animated.View entering={FadeInDown.delay(index * 40).duration(300)}>
+            <View>
               <Pressable
                 onPress={() => navigation.navigate("BookingDetail", { bookingId: item._id })}
                 style={({ pressed }) => ({ opacity: pressed ? 0.95 : 1 })}
               >
                 <BookingCard booking={item} />
               </Pressable>
-            </Animated.View>
+            </View>
           )}
         />
       )}
+      </Animated.View>
     </View>
   );
 }

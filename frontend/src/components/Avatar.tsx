@@ -40,14 +40,14 @@ function getInitials(name: string): string {
 }
 
 const COLORS = [
-  "#4F46E5",
-  "#7C3AED",
-  "#EC4899",
-  "#F59E0B",
-  "#16A34A",
-  "#06B6D4",
-  "#EF4444",
-  "#3B82F6",
+  "#1B4D42",
+  "#C97A2B",
+  "#5B4159",
+  "#8A3A4E",
+  "#2E5C6E",
+  "#A8601F",
+  "#3E5C3A",
+  "#B3432E",
 ];
 
 function getColorForName(name: string): string {
@@ -68,14 +68,12 @@ export function Avatar({ uri, name, size, online, style }: AvatarProps) {
       {uri ? (
         <Image
           source={{ uri }}
-          style={[
-            styles.image,
-            {
-              width: dim,
-              height: dim,
-              borderRadius: dim / 2,
-            },
-          ]}
+          style={{
+            width: dim,
+            height: dim,
+            borderRadius: dim / 2,
+            backgroundColor: colors.surfaceMuted,
+          }}
         />
       ) : (
         <View
@@ -89,7 +87,7 @@ export function Avatar({ uri, name, size, online, style }: AvatarProps) {
             },
           ]}
         >
-          <Text style={[typography.small, { color: "#FFFFFF", fontSize, fontWeight: "700" }]}>
+          <Text style={[typography.small, { color: "#FFFFFF", fontSize }]}>
             {getInitials(name)}
           </Text>
         </View>
@@ -102,7 +100,7 @@ export function Avatar({ uri, name, size, online, style }: AvatarProps) {
               width: dim * 0.26,
               height: dim * 0.26,
               borderRadius: dim * 0.13,
-              backgroundColor: online ? "#16A34A" : colors.textMuted,
+              backgroundColor: online ? colors.success : colors.textMuted,
               borderColor: colors.surface,
               right: dim * 0.02,
               bottom: dim * 0.02,
@@ -115,9 +113,6 @@ export function Avatar({ uri, name, size, online, style }: AvatarProps) {
 }
 
 const styles = StyleSheet.create({
-  image: {
-    backgroundColor: "#E7E6F0",
-  },
   initials: {
     alignItems: "center",
     justifyContent: "center",

@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -23,6 +23,7 @@ import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Divider } from "@/components/Divider";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { setUnauthenticated, updateUser } from "@/redux/slices/authSlice";
 import { useLogoutMutation } from "@/redux/api/authApi";
@@ -161,19 +162,21 @@ export function ProfileScreen({ navigation }: Props) {
   ];
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Profile Header */}
-      <Animated.View entering={FadeInDown.duration(400)}>
-        <LinearGradient
-          colors={gradients.primary.colors as any}
-          start={gradients.primary.start}
-          end={gradients.primary.end}
-          style={styles.headerGradient}
-        >
+    <View style={styles.flex}>
+      <ScreenBackground mood="profile" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Header */}
+        <View>
+          <LinearGradient
+            colors={gradients.primary.colors as any}
+            start={gradients.primary.start}
+            end={gradients.primary.end}
+            style={styles.headerGradient}
+          >
           <View style={styles.avatarContainer}>
             <Pressable
               onPress={handlePickAvatar}
@@ -207,11 +210,11 @@ export function ProfileScreen({ navigation }: Props) {
             </Text>
           </View>
         </LinearGradient>
-      </Animated.View>
+      </View>
 
       {/* Home Location */}
       {user?.location?.coordinates ? (
-        <Animated.View entering={FadeInDown.delay(80).duration(400)}>
+        <View>
           <View
             style={[
               styles.locationRow,
@@ -224,11 +227,11 @@ export function ProfileScreen({ navigation }: Props) {
               {user.location.city ?? `Home: ${user.location.coordinates[1].toFixed(3)}, ${user.location.coordinates[0].toFixed(3)}`}
             </Text>
           </View>
-        </Animated.View>
+        </View>
       ) : null}
 
       {/* Stats */}
-      <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+      <View>
         <View style={[styles.statsRow, getShadow(colors, "sm"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <StatBlock
             icon="star"
@@ -251,10 +254,10 @@ export function ProfileScreen({ navigation }: Props) {
             colors={colors}
           />
         </View>
-      </Animated.View>
+      </View>
 
       {/* Gamification Progress */}
-      <Animated.View entering={FadeInDown.delay(150).duration(400)}>
+      <View>
         <Card style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <View>
@@ -298,10 +301,10 @@ export function ProfileScreen({ navigation }: Props) {
             </View>
           ) : null}
         </Card>
-      </Animated.View>
+      </View>
 
       {/* Menu */}
-      <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.menuSection}>
+      <View style={styles.menuSection}>
         {menuItems.map((item, index) => (
           <React.Fragment key={item.label}>
             <Pressable
@@ -346,7 +349,7 @@ export function ProfileScreen({ navigation }: Props) {
             ) : null}
           </React.Fragment>
         ))}
-      </Animated.View>
+      </View>
 
       {/* Footer */}
       <Text style={[typography.tiny, { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl }]}>
@@ -354,7 +357,9 @@ export function ProfileScreen({ navigation }: Props) {
       </Text>
 
       <View style={{ height: spacing.xxl }} />
-    </ScrollView>
+      </ScrollView>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -379,6 +384,7 @@ function StatBlock({
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   content: { paddingBottom: spacing.xxl },
 
   // Header

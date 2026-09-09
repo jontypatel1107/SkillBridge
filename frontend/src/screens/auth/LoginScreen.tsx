@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,6 +19,7 @@ import { spacing, typography, radii } from "@/theme/tokens";
 import { gradients } from "@/theme/gradients";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useLoginMutation } from "@/redux/api/authApi";
 import { tokenStorage } from "@/utils/tokenStorage";
 import { useAppDispatch } from "@/hooks/redux";
@@ -59,113 +60,116 @@ export function LoginScreen({ navigation }: Props) {
     ? "data" in error
       ? (error.data as { message?: string })?.message
       : "status" in error && error.status === "FETCH_ERROR"
-        ? "Unable to connect to server. Please check your connection."
+        ? "Can't reach the server. Make sure the backend is running and you're on the same Wi-Fi, then try again."
         : "Something went wrong. Please try again."
     : undefined;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={[styles.flex, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Branding */}
-        <Animated.View entering={FadeInDown.duration(500)}>
-          <LinearGradient
-            colors={gradients.hero.colors as any}
-            start={gradients.hero.start}
-            end={gradients.hero.end}
-            style={styles.branding}
+    <View style={styles.flex}>
+      <ScreenBackground mood="auth" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.flex}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            <Feather name="zap" size={32} color="#FFFFFF" />
-            <Text style={styles.brandName}>SkillBridge</Text>
-            <Text style={styles.brandTagline}>Learn. Teach. Earn.</Text>
-          </LinearGradient>
-        </Animated.View>
+            {/* Branding */}
+            <View>
+              <LinearGradient
+                colors={gradients.hero.colors as any}
+                start={gradients.hero.start}
+                end={gradients.hero.end}
+                style={styles.branding}
+              >
+                <Feather name="zap" size={32} color="#FFFFFF" />
+                <Text style={styles.brandName}>SkillBridge</Text>
+                <Text style={styles.brandTagline}>Learn. Teach. Earn.</Text>
+              </LinearGradient>
+            </View>
 
-        {/* Form */}
-        <Animated.View entering={FadeInDown.delay(150).duration(400)}>
-          <Text style={[typography.h1, { color: colors.text, marginTop: spacing.xxl }]}>
-            Welcome back
-          </Text>
-          <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs }]}>
-            Log in to continue your journey.
-          </Text>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(250).duration(400)}>
-          <View style={styles.formSection}>
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextField
-                  label="Email"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  textContentType="username"
-                  autoComplete="username"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  error={errors.email?.message}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextField
-                  label="Password"
-                  secureTextEntry
-                  textContentType="password"
-                  autoComplete="password"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  error={errors.password?.message}
-                />
-              )}
-            />
-
-            <Pressable onPress={() => navigation.navigate("ForgotPassword")} style={styles.forgotLink}>
-              <Text style={[typography.caption, { color: colors.primary }]}>
-                Forgot password?
+            {/* Form */}
+            <View>
+              <Text style={[typography.h1, { color: colors.text, marginTop: spacing.xxl }]}>
+                Welcome back
               </Text>
-            </Pressable>
+              <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs }]}>
+                Log in to continue your journey.
+              </Text>
+            </View>
 
-            {serverError ? (
-              <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
-                <Feather name="alert-circle" size={16} color={colors.danger} />
-                <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
-                  {serverError}
+            <View style={styles.formSection}>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextField
+                    label="Email"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    textContentType="username"
+                    autoComplete="username"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    error={errors.email?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextField
+                    label="Password"
+                    secureTextEntry
+                    textContentType="password"
+                    autoComplete="password"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    error={errors.password?.message}
+                  />
+                )}
+              />
+
+              <Pressable onPress={() => navigation.navigate("ForgotPassword")} style={styles.forgotLink}>
+                <Text style={[typography.caption, { color: colors.primary }]}>
+                  Forgot password?
                 </Text>
-              </View>
-            ) : null}
+              </Pressable>
 
+              {serverError ? (
+                <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
+                  <Feather name="alert-circle" size={16} color={colors.danger} />
+                  <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
+                    {serverError}
+                  </Text>
+                </View>
+              ) : null}
+
+              <Button
+                label="Log In"
+                onPress={handleSubmit(onSubmit)}
+                loading={isLoading}
+              />
+            </View>
+
+          <View>
             <Button
-              label="Log In"
-              onPress={handleSubmit(onSubmit)}
-              loading={isLoading}
+              label="New here? Create an account"
+              variant="ghost"
+              onPress={() => navigation.navigate("Signup")}
             />
           </View>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(350).duration(400)}>
-          <Button
-            label="New here? Create an account"
-            variant="ghost"
-            onPress={() => navigation.navigate("Signup")}
-          />
-        </Animated.View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+        </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 }
 

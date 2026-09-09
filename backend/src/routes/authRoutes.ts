@@ -15,7 +15,7 @@ import {
 
 const router = Router();
 
-// Tighter limit on auth endpoints to slow down credential stuffing / brute force.
+// Tighter limit on credential-type endpoints to slow down brute force.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
@@ -23,9 +23,18 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Generous limit for refresh because the client rotates the access token every ~14 min
+// plus on any 401; too tight a limit would knock valid users into forced re-login.
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 router.post("/register", authLimiter, validate(registerSchema), authController.register);
 router.post("/login", authLimiter, validate(loginSchema), authController.login);
-router.post("/refresh", authLimiter, validate(refreshSchema), authController.refresh);
+router.post("/refresh", refreshLimiter, validate(refreshSchema), authController.refresh);
 router.post("/logout", requireAuth, authController.logout);
 router.get("/me", requireAuth, authController.me);
 

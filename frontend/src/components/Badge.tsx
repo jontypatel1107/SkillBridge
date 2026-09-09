@@ -49,7 +49,6 @@ const styles = StyleSheet.create({
   text: {
     ...typography.tiny,
     color: "#FFFFFF",
-    fontWeight: "700",
   },
   dot: {
     width: 10,

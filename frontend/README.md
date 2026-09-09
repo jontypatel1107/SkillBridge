@@ -12,10 +12,15 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env` — **use your machine's LAN IP, not `localhost`**, if testing on a
-physical device via Expo Go (see "how can I find my LAN IP" from earlier —
-`ipconfig` / `ifconfig` / `ip a` depending on your OS). Phone and computer
-must be on the same Wi-Fi network.
+In development you can leave `EXPO_PUBLIC_API_URL` / `EXPO_PUBLIC_SOCKET_URL`
+**unset**. The app auto-detects the backend host from the Expo/Metro bundle URL
+and, if that ever goes stale (e.g. you switch Wi-Fi and the PC's LAN IP changed
+mid-session), it scans the current network for a server on the default port
+(`src/config/serverUrl.ts`). Phone and computer must be on the same Wi-Fi
+network.
+
+Only set these when the backend is on a **different** machine than Metro (e.g.
+a fixed remote server):
 
 ```
 EXPO_PUBLIC_API_URL=http://192.168.1.42:5000/api

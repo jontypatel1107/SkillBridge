@@ -9,12 +9,13 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
 import { Button } from "@/components/Button";
 import { LocationMap } from "@/components/LocationMap";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useCreateBookingMutation } from "@/redux/api/bookingsApi";
 import { makeLocationPicker } from "@/utils/mapPickerBridge";
 import type { PickedLocation } from "@/utils/mapPickerBridge";
@@ -82,14 +83,17 @@ export function BookSessionScreen({ route, navigation }: Props) {
     error && "data" in error ? (error.data as { message?: string })?.message : undefined;
 
   return (
-    <ScrollView
-      style={[styles.flex, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Step 1: Session Type */}
-      <Animated.View entering={FadeInDown.duration(400)}>
-        <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm, textTransform: "uppercase", letterSpacing: 0.8 }]}>
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <ScrollView
+          style={styles.flex}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Step 1: Session Type */}
+          <View>
+        <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm, letterSpacing: 0.8 }]}>
           Step 1
         </Text>
         <Text style={[typography.h3, { color: colors.text, marginBottom: spacing.md }]}>
@@ -135,11 +139,11 @@ export function BookSessionScreen({ route, navigation }: Props) {
             );
           })}
         </View>
-      </Animated.View>
+      </View>
 
       {/* Step 2: Pick Date */}
-      <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-        <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm, marginTop: spacing.xl, textTransform: "uppercase", letterSpacing: 0.8 }]}>
+      <View>
+        <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm, marginTop: spacing.xl, letterSpacing: 0.8 }]}>
           Step 2
         </Text>
         <Text style={[typography.h3, { color: colors.text, marginBottom: spacing.md }]}>
@@ -185,11 +189,11 @@ export function BookSessionScreen({ route, navigation }: Props) {
             display={Platform.OS === "ios" ? "spinner" : "default"}
           />
         )}
-      </Animated.View>
+      </View>
 
       {/* Step 3: Pick Time */}
-      <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-        <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm, marginTop: spacing.xl, textTransform: "uppercase", letterSpacing: 0.8 }]}>
+      <View>
+        <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm, marginTop: spacing.xl, letterSpacing: 0.8 }]}>
           Step 3
         </Text>
         <Text style={[typography.h3, { color: colors.text, marginBottom: spacing.md }]}>
@@ -227,12 +231,12 @@ export function BookSessionScreen({ route, navigation }: Props) {
             );
           })}
         </View>
-      </Animated.View>
+      </View>
 
       {/* Step 4: Location (offline only) */}
       {mode === "offline" ? (
-        <Animated.View entering={FadeInDown.delay(250).duration(400)}>
-          <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm, marginTop: spacing.xl, textTransform: "uppercase", letterSpacing: 0.8 }]}>
+        <View>
+          <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm, marginTop: spacing.xl, letterSpacing: 0.8 }]}>
             Step 4
           </Text>
           <Text style={[typography.h3, { color: colors.text, marginBottom: spacing.md }]}>
@@ -270,7 +274,7 @@ export function BookSessionScreen({ route, navigation }: Props) {
               />
             </View>
           ) : null}
-        </Animated.View>
+        </View>
       ) : null}
 
       {/* Error */}
@@ -284,15 +288,13 @@ export function BookSessionScreen({ route, navigation }: Props) {
       ) : null}
 
       {/* Summary */}
-      <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-        <View style={[styles.summaryCard, getShadow(colors, "sm"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>Booking Summary</Text>
-          <SummaryRow icon="video" label="Mode" value={mode} colors={colors} />
-          <SummaryRow icon="calendar" label="Date" value={date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} colors={colors} />
-          <SummaryRow icon="clock" label="Time" value={selectedTimeStr} colors={colors} />
-          <SummaryRow icon="timer" label="Duration" value="60 minutes" colors={colors} />
-        </View>
-      </Animated.View>
+      <View style={[styles.summaryCard, getShadow(colors, "sm"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <Text style={[typography.h4, { color: colors.text, marginBottom: spacing.md }]}>Booking Summary</Text>
+        <SummaryRow icon="video" label="Mode" value={mode} colors={colors} />
+        <SummaryRow icon="calendar" label="Date" value={date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} colors={colors} />
+        <SummaryRow icon="clock" label="Time" value={selectedTimeStr} colors={colors} />
+        <SummaryRow icon="timer" label="Duration" value="60 minutes" colors={colors} />
+      </View>
 
       <Button
         label="Confirm Booking"
@@ -308,6 +310,8 @@ export function BookSessionScreen({ route, navigation }: Props) {
       ) : null}
       <View style={{ height: spacing.xxl }} />
     </ScrollView>
+    </Animated.View>
+    </View>
   );
 }
 

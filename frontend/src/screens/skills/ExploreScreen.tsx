@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import * as Location from "expo-location";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
@@ -23,6 +23,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { SkeletonCard } from "@/components/Skeleton";
 import { MentorCard } from "@/components/MentorCard";
 import { SectionHeader } from "@/components/SectionHeader";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useSearchSkillsQuery } from "@/redux/api/skillsApi";
 import { useNearbyMentorsQuery } from "@/redux/api/userApi";
 import { useAppSelector } from "@/hooks/redux";
@@ -187,53 +188,55 @@ export function ExploreScreen({ navigation }: Props) {
   }, []);
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <LinearGradient
-          colors={[colors.primary, colors.cyan]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.heroCard}
-        >
-          <Text style={styles.heroEyebrow}>Discover</Text>
-          <Text style={styles.heroTitle}>Find your next skill.</Text>
-          <Text style={styles.heroSubtitle}>
-            Explore curated classes, mentors, and high-impact learning paths.
-          </Text>
-          <View style={styles.heroStatsRow}>
-            <View style={styles.heroStatPill}>
-              <Feather name="users" size={12} color="#FFFFFF" />
-              <Text style={styles.heroStatText}>Top mentors</Text>
+    <View style={styles.flex}>
+      <ScreenBackground mood="explore" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+          <LinearGradient
+            colors={[colors.primary, colors.cyan]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroCard}
+          >
+            <Text style={styles.heroEyebrow}>Discover</Text>
+            <Text style={styles.heroTitle}>Find your next skill.</Text>
+            <Text style={styles.heroSubtitle}>
+              Explore curated classes, mentors, and high-impact learning paths.
+            </Text>
+            <View style={styles.heroStatsRow}>
+              <View style={styles.heroStatPill}>
+                <Feather name="users" size={12} color="#FFFFFF" />
+                <Text style={styles.heroStatText}>Top mentors</Text>
+              </View>
+              <View style={styles.heroStatPill}>
+                <Feather name="trending-up" size={12} color="#FFFFFF" />
+                <Text style={styles.heroStatText}>Fresh picks</Text>
+              </View>
             </View>
-            <View style={styles.heroStatPill}>
-              <Feather name="trending-up" size={12} color="#FFFFFF" />
-              <Text style={styles.heroStatText}>Fresh picks</Text>
+          </LinearGradient>
+
+          <SearchBar
+            value={query}
+            onChangeText={handleSearchChange}
+            placeholder="Search skills, mentors, topics..."
+            style={styles.searchBar}
+          />
+
+          <View style={styles.toolbarRow}>
+            <View style={styles.sortRow}>
+              {SORT_OPTIONS.map((opt) => (
+                <Chip
+                  key={opt.value}
+                  label={opt.label}
+                  selected={sort === opt.value}
+                  onPress={() => handleSortChange(opt.value)}
+                  style={styles.sortChip}
+                />
+              ))}
             </View>
-          </View>
-        </LinearGradient>
-
-        <SearchBar
-          value={query}
-          onChangeText={handleSearchChange}
-          placeholder="Search skills, mentors, topics..."
-          style={styles.searchBar}
-        />
-
-        <View style={styles.toolbarRow}>
-          <View style={styles.sortRow}>
-            {SORT_OPTIONS.map((opt) => (
-              <Chip
-                key={opt.value}
-                label={opt.label}
-                selected={sort === opt.value}
-                onPress={() => handleSortChange(opt.value)}
-                style={styles.sortChip}
-              />
-            ))}
-          </View>
-          <Pressable
-            onPress={() => setShowFilters((v) => !v)}
+            <Pressable
+              onPress={() => setShowFilters((v) => !v)}
             style={[
               styles.filterToggle,
               {
@@ -247,9 +250,8 @@ export function ExploreScreen({ navigation }: Props) {
         </View>
 
         {showFilters && (
-          <Animated.View entering={FadeInDown.duration(200)}>
-            <View style={[styles.filterPanel, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>Price Range ($/hr)</Text>
+          <View style={[styles.filterPanel, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
+            <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>Price Range ($/hr)</Text>
               <View style={styles.priceRow}>
                 <TextInput
                   style={[styles.priceInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
@@ -277,8 +279,7 @@ export function ExploreScreen({ navigation }: Props) {
                   </Pressable>
                 )}
               </View>
-            </View>
-          </Animated.View>
+          </View>
         )}
 
         <FlatList
@@ -435,18 +436,17 @@ export function ExploreScreen({ navigation }: Props) {
               </Text>
             ) : null
           }
-          renderItem={({ item, index }) => (
-            <Animated.View entering={FadeInDown.delay(Math.min(index, 5) * 40).duration(300)}>
-              <Pressable
-                onPress={() => navigation.navigate("SkillDetail", { skillId: item._id })}
-                style={({ pressed }) => ({ opacity: pressed ? 0.95 : 1 })}
-              >
-                <ExploreResultCard skill={item} />
-              </Pressable>
-            </Animated.View>
+          renderItem={({ item }) => (
+            <Pressable
+              onPress={() => navigation.navigate("SkillDetail", { skillId: item._id })}
+              style={({ pressed }) => ({ opacity: pressed ? 0.95 : 1 })}
+            >
+              <ExploreResultCard skill={item} />
+            </Pressable>
           )}
         />
       )}
+      </Animated.View>
     </View>
   );
 }
@@ -572,7 +572,6 @@ const styles = StyleSheet.create({
   heroEyebrow: {
     ...typography.caption,
     color: "rgba(255,255,255,0.8)",
-    textTransform: "uppercase",
     letterSpacing: 1.2,
     fontWeight: "800",
   },

@@ -41,9 +41,15 @@ function toUserResponse(user: any) {
 export async function register(req: Request, res: Response) {
   const { name, username, email, password, role } = req.body as RegisterInput;
 
-  const existing = await User.findOne({ $or: [{ email }, { username }] });
-  if (existing) {
-    throw new ApiError(409, "Email or username already in use");
+  const [emailUser, usernameUser] = await Promise.all([
+    User.findOne({ email }).select("_id"),
+    User.findOne({ username }).select("_id"),
+  ]);
+  if (emailUser) {
+    throw new ApiError(409, "This email is already registered. Try logging in instead.");
+  }
+  if (usernameUser) {
+    throw new ApiError(409, "This username is already taken. Please choose another.");
   }
 
   const user = await User.create({ name, username, email, password, role });

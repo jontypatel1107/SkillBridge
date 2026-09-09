@@ -7,12 +7,13 @@ import {
   Pressable,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
 import { EmptyState } from "@/components/EmptyState";
 import { SkeletonCard } from "@/components/Skeleton";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import {
   useMyNotificationsQuery,
   useMarkNotificationReadMutation,
@@ -21,12 +22,12 @@ import {
 } from "@/redux/api/notificationsApi";
 
 const NOTIFICATION_ICONS: Record<string, { icon: string; color: string }> = {
-  booking: { icon: "calendar", color: "#4F46E5" },
-  message: { icon: "message-circle", color: "#06B6D4" },
-  review: { icon: "star", color: "#F59E0B" },
-  achievement: { icon: "award", color: "#16A34A" },
-  recommendation: { icon: "zap", color: "#7C3AED" },
-  default: { icon: "bell", color: "#6B6B7B" },
+  booking: { icon: "calendar", color: "#1B4D42" },
+  message: { icon: "message-circle", color: "#2E5C6E" },
+  review: { icon: "star", color: "#C97A2B" },
+  achievement: { icon: "award", color: "#3E5C3A" },
+  recommendation: { icon: "zap", color: "#5B4159" },
+  default: { icon: "bell", color: "#6B7570" },
 };
 
 function getNotificationConfig(type: string) {
@@ -54,41 +55,42 @@ export function NotificationsScreen() {
   const notifications = data?.notifications ?? [];
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      {data && data.unreadCount > 0 ? (
-        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-          <Text style={[typography.caption, { color: colors.textMuted }]}>
-            {data.unreadCount} unread notification{data.unreadCount !== 1 ? "s" : ""}
-          </Text>
-          <Pressable onPress={() => markAllRead()} disabled={isMarkingAll} hitSlop={8}>
-            <Text style={[typography.bodyMedium, { color: colors.primary }]}>
-              {isMarkingAll ? "Marking..." : "Mark all read"}
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        {data && data.unreadCount > 0 ? (
+          <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <Text style={[typography.caption, { color: colors.textMuted }]}>
+              {data.unreadCount} unread notification{data.unreadCount !== 1 ? "s" : ""}
             </Text>
-          </Pressable>
-        </View>
-      ) : null}
+            <Pressable onPress={() => markAllRead()} disabled={isMarkingAll} hitSlop={8}>
+              <Text style={[typography.bodyMedium, { color: colors.primary }]}>
+                {isMarkingAll ? "Marking..." : "Mark all read"}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
 
-      {isLoading ? (
-        <View style={styles.listContent}>
-          <SkeletonCard />
-          <SkeletonCard style={{ marginTop: spacing.md }} />
-          <SkeletonCard style={{ marginTop: spacing.md }} />
-        </View>
-      ) : (
-        <FlatList
-          data={notifications}
-          keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <EmptyState
-              icon="🔔"
-              title="You're all caught up"
-              subtitle="No new notifications to show."
-            />
-          }
-          renderItem={({ item, index }) => (
-            <Animated.View entering={FadeInDown.delay(index * 30).duration(300)}>
+        {isLoading ? (
+          <View style={styles.listContent}>
+            <SkeletonCard />
+            <SkeletonCard style={{ marginTop: spacing.md }} />
+            <SkeletonCard style={{ marginTop: spacing.md }} />
+          </View>
+        ) : (
+          <FlatList
+            data={notifications}
+            keyExtractor={(item) => item._id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <EmptyState
+                icon="🔔"
+                title="You're all caught up"
+                subtitle="No new notifications to show."
+              />
+            }
+            renderItem={({ item }) => (
               <Pressable
                 onPress={() => {
                   if (!item.isRead) markRead(item._id);
@@ -97,10 +99,10 @@ export function NotificationsScreen() {
               >
                 <NotificationCard item={item} />
               </Pressable>
-            </Animated.View>
-          )}
-        />
-      )}
+            )}
+          />
+        )}
+      </Animated.View>
     </View>
   );
 }

@@ -6,12 +6,13 @@ import {
   Pressable,
   SectionList,
 } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography } from "@/theme/tokens";
 import { Avatar } from "@/components/Avatar";
 import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { chatApi, useConversationsQuery, Conversation } from "@/redux/api/chatApi";
 import { usePresence } from "@/hooks/usePresence";
 import { connectSocket } from "@/services/socket";
@@ -91,7 +92,8 @@ export function ChatListScreen({ navigation }: Props) {
 
   if (isLoading) {
     return (
-      <View style={[styles.flex, { backgroundColor: colors.background }]}>
+      <View style={styles.flex}>
+        <ScreenBackground mood="chat" />
         <View style={styles.listContent}>
           {[1, 2, 3, 4].map((i) => (
             <View key={i} style={[styles.row, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -108,8 +110,10 @@ export function ChatListScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <SectionList
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <SectionList
         sections={sections}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
@@ -127,10 +131,10 @@ export function ChatListScreen({ navigation }: Props) {
             <Text style={[typography.caption, { color: colors.textMuted }]}>{section.title}</Text>
           </View>
         )}
-        renderItem={({ item, index }) => {
+        renderItem={({ item }) => {
           const online = isOnline(item._id);
           return (
-            <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 40).duration(300)}>
+            <View>
               <Pressable
                 onPress={() =>
                   navigation.navigate("Conversation", {
@@ -148,7 +152,7 @@ export function ChatListScreen({ navigation }: Props) {
                       size={54}
                     />
                     {online && !item.user.avatarUrl ? (
-                      <View style={[styles.avatarOnline, { borderColor: colors.background }]} />
+                      <View style={[styles.avatarOnline, { backgroundColor: colors.success, borderColor: colors.background }]} />
                     ) : null}
                   </View>
 
@@ -190,10 +194,11 @@ export function ChatListScreen({ navigation }: Props) {
                   </View>
                 </View>
               </Pressable>
-            </Animated.View>
+            </View>
           );
         }}
-      />
+        />
+      </Animated.View>
     </View>
   );
 }
@@ -230,7 +235,6 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#16A34A",
     borderWidth: 2,
   },
   rowContent: {

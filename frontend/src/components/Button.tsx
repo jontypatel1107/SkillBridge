@@ -136,11 +136,9 @@ const styles = StyleSheet.create({
   primaryLabel: {
     ...typography.bodyMedium,
     color: "#FFFFFF",
-    fontWeight: "700",
     letterSpacing: 0.2,
   },
   label: {
     ...typography.bodyMedium,
-    fontWeight: "600",
   },
 });

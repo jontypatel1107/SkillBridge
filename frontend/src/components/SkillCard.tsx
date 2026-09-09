@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/theme/ThemeProvider";
 import { radii, spacing, typography } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
@@ -15,6 +16,18 @@ interface SkillCardProps {
   mentorName?: string;
   onPress?: () => void;
 }
+
+const CATEGORY_ICONS: Record<string, string> = {
+  development: "code",
+  ai: "cpu",
+  design: "pen-tool",
+  music: "music",
+  fitness: "activity",
+  business: "briefcase",
+  photography: "camera",
+  cooking: "coffee",
+  languages: "globe",
+};
 
 export const SkillCard = React.memo(function SkillCard({ title, category, price, mentorName, onPress }: SkillCardProps) {
   const { colors } = useTheme();
@@ -39,8 +52,16 @@ export const SkillCard = React.memo(function SkillCard({ title, category, price,
           end={{ x: 1, y: 1 }}
           style={styles.gradientHeader}
         >
-          <Text style={styles.categoryLabel}>{category}</Text>
-          <Text style={styles.price}>${price}/hr</Text>
+          <Feather
+            name={(CATEGORY_ICONS[category] ?? "zap") as any}
+            size={44}
+            color="rgba(255,255,255,0.18)"
+            style={styles.watermark}
+          />
+          <View style={styles.headerRow}>
+            <Text style={styles.categoryLabel}>{category}</Text>
+            <Text style={styles.price}>${price}/hr</Text>
+          </View>
         </LinearGradient>
         <View style={styles.body}>
           <Text style={[typography.bodyMedium, { color: colors.text }]} numberOfLines={2}>
@@ -68,21 +89,26 @@ const styles = StyleSheet.create({
     height: 72,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  watermark: {
+    position: "absolute",
+    right: spacing.md,
+    alignSelf: "center",
+  },
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
   },
   categoryLabel: {
     ...typography.tiny,
-    color: "rgba(255,255,255,0.85)",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    fontWeight: "700",
+    color: "rgba(255,255,255,0.9)",
   },
   price: {
     ...typography.small,
     color: "#FFFFFF",
-    fontWeight: "700",
   },
   body: {
     padding: spacing.md,

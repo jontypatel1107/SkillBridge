@@ -17,6 +17,8 @@ export function TextField({ label, error, style, ...rest }: TextFieldProps) {
       {label ? <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text> : null}
       <TextInput
         placeholderTextColor={colors.textMuted}
+        autoCapitalize="none"
+        autoCorrect={false}
         style={[
           styles.input,
           {

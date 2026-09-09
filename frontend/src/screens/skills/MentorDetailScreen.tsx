@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
@@ -19,6 +19,7 @@ import { Chip } from "@/components/Chip";
 import { Button } from "@/components/Button";
 import { SkeletonCard } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useGetPublicProfileQuery } from "@/redux/api/userApi";
 import { categoryGradients } from "@/theme/gradients";
 import type { Skill } from "@/types";
@@ -43,33 +44,34 @@ export function MentorDetailScreen({ route, navigation }: Props) {
   };
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.topBar}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Feather name="chevron-left" size={28} color="#F8FAFC" />
-          </Pressable>
-          <Text style={styles.pageTitle}>Mentor Profile</Text>
-        </View>
-
-        <LinearGradient
-          colors={gradients.primary.colors as any}
-          start={gradients.primary.start}
-          end={gradients.primary.end}
-          style={styles.headerGradient}
-        >
-          <View style={styles.avatarRing}>
-            <Avatar uri={mentor.avatarUrl} name={mentor.name} size={80} />
+    <View style={styles.flex}>
+      <ScreenBackground mood="explore" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.topBar}>
+            <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Feather name="chevron-left" size={28} color="#F8FAFC" />
+            </Pressable>
+            <Text style={styles.pageTitle}>Mentor Profile</Text>
           </View>
-          <Text style={styles.name}>{mentor.name}</Text>
-          <Text style={styles.username}>@{mentor.username}</Text>
-          <View style={styles.roleBadge}>
-            <Feather name="award" size={12} color="rgba(255,255,255,0.9)" />
-            <Text style={styles.roleText}>Mentor</Text>
-          </View>
-        </LinearGradient>
 
-        <Animated.View entering={FadeInDown.delay(50).duration(400)}>
+          <LinearGradient
+            colors={gradients.primary.colors as any}
+            start={gradients.primary.start}
+            end={gradients.primary.end}
+            style={styles.headerGradient}
+          >
+            <View style={styles.avatarRing}>
+              <Avatar uri={mentor.avatarUrl} name={mentor.name} size={80} />
+            </View>
+            <Text style={styles.name}>{mentor.name}</Text>
+            <Text style={styles.username}>@{mentor.username}</Text>
+            <View style={styles.roleBadge}>
+              <Feather name="award" size={12} color="rgba(255,255,255,0.9)" />
+              <Text style={styles.roleText}>Mentor</Text>
+            </View>
+          </LinearGradient>
+
           <View
             style={[
               styles.infoCard,
@@ -124,10 +126,8 @@ export function MentorDetailScreen({ route, navigation }: Props) {
               style={styles.chatButton}
             />
           </View>
-        </Animated.View>
 
-        {mentor.location?.city ? (
-          <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+          {mentor.location?.city ? (
             <View
               style={[
                 styles.infoCard,
@@ -153,35 +153,36 @@ export function MentorDetailScreen({ route, navigation }: Props) {
                 </View>
               ) : null}
             </View>
-          </Animated.View>
-        ) : null}
+          ) : null}
 
-        <Text style={[typography.h3, { color: colors.text, marginTop: spacing.lg, marginBottom: spacing.md }]}>
-          Listings ({isLoading ? "..." : listings.length})
-        </Text>        {isLoading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard style={{ marginTop: spacing.md }} />
-          </>
-        ) : listings.length === 0 ? (
-          <EmptyState
-            icon="📦"
-            title="No listings yet"
-            subtitle="This mentor hasn't published any skill listings yet, but you can still message them."
-            action={<Chip label="Message" onPress={openChat} />}
-          />
-        ) : (
-          listings.map((skill) => (
-            <Pressable
-              key={skill._id}
-              onPress={() => navigation.navigate("SkillDetail", { skillId: skill._id })}
-              style={({ pressed }) => ({ opacity: pressed ? 0.95 : 1 })}
-            >
-              <ListingCard skill={skill} />
-            </Pressable>
-          ))
-        )}
-      </ScrollView>
+          <Text style={[typography.h3, { color: colors.text, marginTop: spacing.lg, marginBottom: spacing.md }]}>
+            Listings ({isLoading ? "..." : listings.length})
+          </Text>
+          {isLoading ? (
+            <>
+              <SkeletonCard />
+              <SkeletonCard style={{ marginTop: spacing.md }} />
+            </>
+          ) : listings.length === 0 ? (
+            <EmptyState
+              icon="📦"
+              title="No listings yet"
+              subtitle="This mentor hasn't published any skill listings yet, but you can still message them."
+              action={<Chip label="Message" onPress={openChat} />}
+            />
+          ) : (
+            listings.map((skill) => (
+              <Pressable
+                key={skill._id}
+                onPress={() => navigation.navigate("SkillDetail", { skillId: skill._id })}
+                style={({ pressed }) => ({ opacity: pressed ? 0.95 : 1 })}
+              >
+                <ListingCard skill={skill} />
+              </Pressable>
+            ))
+          )}
+        </ScrollView>
+      </Animated.View>
     </View>
   );
 }

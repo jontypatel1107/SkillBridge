@@ -8,10 +8,11 @@ import {
   Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { Button } from "@/components/Button";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useVerifyOtpMutation, useForgotPasswordMutation } from "@/redux/api/authApi";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "@/navigation/types";
@@ -71,74 +72,79 @@ export function VerifyOtpScreen({ route, navigation }: Props) {
     error && "data" in error ? (error.data as { message?: string })?.message : undefined;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={[styles.flex, { backgroundColor: colors.background }]}
-    >
-      <View style={styles.content}>
-        <Animated.View entering={FadeInDown.duration(400)}>
-          <View style={[styles.iconWrap, { backgroundColor: colors.primaryMuted }]}>
-            <Feather name="mail" size={32} color={colors.primary} />
+    <View style={styles.flex}>
+      <ScreenBackground mood="auth" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.flex}
+        >
+          <View style={styles.content}>
+            <View>
+              <View style={[styles.iconWrap, { backgroundColor: colors.primaryMuted }]}>
+                <Feather name="mail" size={32} color={colors.primary} />
+              </View>
+              <Text style={[typography.h2, { color: colors.text, marginTop: spacing.xl, textAlign: "center" }]}>
+                Enter verification code
+              </Text>
+              <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" }]}>
+                We sent a 6-digit code to{"\n"}{email}
+              </Text>
+            </View>
+
+            <View style={styles.otpRow}>
+              {code.map((digit, i) => (
+                <TextInput
+                  key={i}
+                  ref={(ref) => { inputs.current[i] = ref; }}
+                  style={[
+                    styles.otpBox,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: digit ? colors.primary : colors.border,
+                      color: colors.text,
+                    },
+                  ]}
+                  value={digit}
+                  onChangeText={(t) => handleChange(t, i)}
+                  onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, i)}
+                  keyboardType="number-pad"
+                  maxLength={1}
+                  selectTextOnFocus
+                />
+              ))}
+            </View>
+
+            {serverError ? (
+              <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
+                <Feather name="alert-circle" size={16} color={colors.danger} />
+                <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
+                  {serverError}
+                </Text>
+              </View>
+            ) : null}
+
+            <View>
+              <Button
+                label="Verify"
+                onPress={handleVerify}
+                loading={isLoading}
+                disabled={code.join("").length !== OTP_LENGTH}
+              />
+            </View>
+
+            <View>
+              <Button
+                label={isResending ? "Sending..." : "Resend OTP"}
+                variant="ghost"
+                onPress={handleResend}
+                disabled={isResending}
+              />
+            </View>
           </View>
-          <Text style={[typography.h2, { color: colors.text, marginTop: spacing.xl, textAlign: "center" }]}>
-            Enter verification code
-          </Text>
-          <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" }]}>
-            We sent a 6-digit code to{"\n"}{email}
-          </Text>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.otpRow}>
-          {code.map((digit, i) => (
-            <TextInput
-              key={i}
-              ref={(ref) => { inputs.current[i] = ref; }}
-              style={[
-                styles.otpBox,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: digit ? colors.primary : colors.border,
-                  color: colors.text,
-                },
-              ]}
-              value={digit}
-              onChangeText={(t) => handleChange(t, i)}
-              onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, i)}
-              keyboardType="number-pad"
-              maxLength={1}
-              selectTextOnFocus
-            />
-          ))}
-        </Animated.View>
-
-        {serverError ? (
-          <Animated.View entering={FadeInDown.delay(150).duration(300)} style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
-            <Feather name="alert-circle" size={16} color={colors.danger} />
-            <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
-              {serverError}
-            </Text>
-          </Animated.View>
-        ) : null}
-
-        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <Button
-            label="Verify"
-            onPress={handleVerify}
-            loading={isLoading}
-            disabled={code.join("").length !== OTP_LENGTH}
-          />
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(250).duration(400)}>
-          <Button
-            label={isResending ? "Sending..." : "Resend OTP"}
-            variant="ghost"
-            onPress={handleResend}
-            disabled={isResending}
-          />
-        </Animated.View>
-      </View>
-    </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 }
 

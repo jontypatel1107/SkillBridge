@@ -6,70 +6,75 @@ export interface GradientStop {
 
 export const gradients = {
   primary: {
-    colors: ["#2563EB", "#06B6D4"],
+    colors: ["#1B4D42", "#2F7361"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   primarySoft: {
-    colors: ["#3B82F6", "#93C5FD"],
+    colors: ["#2F7361", "#5FA894"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   accent: {
-    colors: ["#F43F5E", "#F59E0B"],
+    colors: ["#C97A2B", "#E0A25A"],
+    start: { x: 0, y: 0 },
+    end: { x: 1, y: 1 },
+  },
+  plum: {
+    colors: ["#5B4159", "#8A3A4E"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   cyan: {
-    colors: ["#06B6D4", "#22D3EE"],
+    colors: ["#2E5C6E", "#5FA894"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   warm: {
-    colors: ["#F59E0B", "#EF4444"],
+    colors: ["#C97A2B", "#A8601F"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   cool: {
-    colors: ["#3B82F6", "#06B6D4"],
+    colors: ["#1B4D42", "#2E5C6E"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   success: {
-    colors: ["#16A34A", "#4ADE80"],
+    colors: ["#2F7D4F", "#6FBF8E"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   hero: {
-    colors: ["#0F172A", "#2563EB", "#06B6D4", "#F43F5E"],
+    colors: ["#1B4D42", "#2F7361", "#C97A2B"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   dark: {
-    colors: ["#080B12", "#172033"],
+    colors: ["#121714", "#212B24"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
   shimmer: {
-    colors: ["#DDE5F3", "#ECF2FF", "#DDE5F3"],
+    colors: ["#DCE5D8", "#EAF0E6", "#DCE5D8"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 0 },
   },
   shimmerDark: {
-    colors: ["#263348", "#172033", "#263348"],
+    colors: ["#2B362F", "#212B24", "#2B362F"],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 0 },
   },
 } as const;
 
 export const categoryGradients: Record<string, { colors: string[] }> = {
-  development: { colors: ["#2563EB", "#22D3EE"] },
-  ai: { colors: ["#7C3AED", "#06B6D4"] },
-  music: { colors: ["#F43F5E", "#FB7185"] },
-  fitness: { colors: ["#059669", "#34D399"] },
-  design: { colors: ["#F59E0B", "#F97316"] },
-  business: { colors: ["#0891B2", "#60A5FA"] },
-  photography: { colors: ["#E11D48", "#F59E0B"] },
-  cooking: { colors: ["#F97316", "#FB923C"] },
-  languages: { colors: ["#3B82F6", "#60A5FA"] },
+  development: { colors: ["#1B4D42", "#2F7361"] },
+  ai: { colors: ["#5B4159", "#8A3A4E"] },
+  music: { colors: ["#B3432E", "#C97A2B"] },
+  fitness: { colors: ["#3E5C3A", "#6FBF8E"] },
+  design: { colors: ["#C97A2B", "#E0A25A"] },
+  business: { colors: ["#2E5C6E", "#5FA894"] },
+  photography: { colors: ["#8A3A4E", "#A8601F"] },
+  cooking: { colors: ["#A8601F", "#E0A25A"] },
+  languages: { colors: ["#1B4D42", "#5FA894"] },
 };

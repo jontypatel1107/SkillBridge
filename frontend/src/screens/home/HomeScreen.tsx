@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { getShadow } from "@/theme/shadows";
@@ -22,6 +22,7 @@ import { Skill, User, SkillCategory } from "@/types";
 import { Avatar } from "@/components/Avatar";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SkeletonCard, SkeletonMentorCard } from "@/components/Skeleton";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { HomeStackParamList } from "@/navigation/types";
 
@@ -61,71 +62,72 @@ export function HomeScreen({ navigation }: Props) {
   const suggestedSkills = useMemo(() => suggested ?? [], [suggested]);
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />
-        }
-      >
-        {/* Header */}
-        <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-          <LinearGradient
-            colors={gradients.hero.colors as any}
-            start={gradients.hero.start}
-            end={gradients.hero.end}
-            style={[styles.heroPanel, getShadow(colors, "float")]}
-          >
-            <View style={styles.heroTopGlow} />
-            <View style={styles.greetingRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.heroEyebrow}>
-                  {getGreeting()} {getGreetingEmoji()}
-                </Text>
-                <Text style={styles.heroTitle} numberOfLines={1}>
-                  {user?.name?.split(" ")[0] ?? "there"}
-                </Text>
-                <Text style={styles.heroSubtitle} numberOfLines={2}>
-                  Find a mentor, launch a session, and keep your learning streak moving.
-                </Text>
+    <View style={styles.flex}>
+      <ScreenBackground mood="home" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />
+          }
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <LinearGradient
+              colors={gradients.hero.colors as any}
+              start={gradients.hero.start}
+              end={gradients.hero.end}
+              style={[styles.heroPanel, getShadow(colors, "float")]}
+            >
+              <View style={styles.heroTopGlow} />
+              <View style={styles.greetingRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.heroEyebrow}>
+                    {getGreeting()} {getGreetingEmoji()}
+                  </Text>
+                  <Text style={styles.heroTitle} numberOfLines={1}>
+                    {user?.name?.split(" ")[0] ?? "there"}
+                  </Text>
+                  <Text style={styles.heroSubtitle} numberOfLines={2}>
+                    Find a mentor, launch a session, and keep your learning streak moving.
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => navigation.getParent()?.navigate("ProfileTab")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open your profile"
+                  style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+                >
+                  <View style={styles.avatarRing}>
+                    <Avatar uri={user?.avatarUrl} name={user?.name ?? "U"} size={50} />
+                  </View>
+                </Pressable>
               </View>
+
+              <View style={styles.heroStats}>
+                <MiniStat icon="layers" label="Skills" value={String(skills.length)} />
+                <MiniStat icon="users" label="Mentors" value={String(mentors.length)} />
+                <MiniStat icon="zap" label="AI Picks" value={String(suggestedSkills.length)} />
+              </View>
+
               <Pressable
-                onPress={() => navigation.getParent()?.navigate("ProfileTab")}
-                accessibilityRole="button"
-                accessibilityLabel="Open your profile"
+                onPress={() => navigation.getParent()?.navigate("ExploreTab")}
                 style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Search skills and mentors"
               >
-                <View style={styles.avatarRing}>
-                  <Avatar uri={user?.avatarUrl} name={user?.name ?? "U"} size={50} />
+                <View style={styles.heroSearchWrap}>
+                  <Feather name="search" size={18} color="#666B7A" style={styles.heroSearchIcon} />
+                  <Text style={styles.heroSearchPlaceholder}>
+                    What do you want to learn?
+                  </Text>
                 </View>
               </Pressable>
-            </View>
+            </LinearGradient>
+          </View>
 
-            <View style={styles.heroStats}>
-              <MiniStat icon="layers" label="Skills" value={String(skills.length)} />
-              <MiniStat icon="users" label="Mentors" value={String(mentors.length)} />
-              <MiniStat icon="zap" label="AI Picks" value={String(suggestedSkills.length)} />
-            </View>
-
-            <Pressable
-              onPress={() => navigation.getParent()?.navigate("ExploreTab")}
-              style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
-              accessibilityRole="button"
-              accessibilityLabel="Search skills and mentors"
-            >
-              <View style={styles.heroSearchWrap}>
-                <Feather name="search" size={18} color="#666B7A" style={styles.heroSearchIcon} />
-                <Text style={styles.heroSearchPlaceholder}>
-                  What do you want to learn?
-                </Text>
-              </View>
-            </Pressable>
-          </LinearGradient>
-        </Animated.View>
-
-        {/* AI Card */}
-        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+          {/* AI Card */}
           <Pressable
             onPress={() =>
               navigation.getParent()?.navigate("ProfileTab", {
@@ -155,11 +157,9 @@ export function HomeScreen({ navigation }: Props) {
               </View>
             </LinearGradient>
           </Pressable>
-        </Animated.View>
 
-        {/* Categories */}
-        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <SectionHeader title="Categories" action="See all" onAction={() => navigation.getParent()?.navigate("ExploreTab")} />
+          {/* Categories */}
+          <SectionHeader style={styles.sectionHeader} title="Categories" action="See all" onAction={() => navigation.getParent()?.navigate("ExploreTab")} />
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -197,134 +197,125 @@ export function HomeScreen({ navigation }: Props) {
               </Pressable>
             )}
           />
-        </Animated.View>
 
-        {/* Recommended Mentors */}
-        {mentorsLoading ? (
-          <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-            <SectionHeader title="Recommended Mentors" />
-            <View style={styles.mentorsList}>
-              <SkeletonMentorCard />
-              <SkeletonMentorCard />
-            </View>
-          </Animated.View>
-        ) : mentors.length > 0 ? (
-          <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-            <SectionHeader title="Recommended Mentors" />
-            <FlatList
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              data={mentors}
-              keyExtractor={(m) => m.id ?? m._id ?? Math.random().toString()}
-              contentContainerStyle={styles.mentorsList}
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() =>
-                    navigation.navigate("MentorDetail", {
-                      username: item.username,
-                      mentor: item,
-                    })
-                  }
-                  style={({ pressed }) => [
-                    styles.mentorCard,
-                    getShadow(colors, "sm"),
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                      opacity: pressed ? 0.95 : 1,
-                    },
-                  ]}
-                >
-                  <Avatar uri={item.avatarUrl} name={item.name} size={48} online />
-                  <Text style={[typography.bodyMedium, { color: colors.text, marginTop: spacing.sm }]} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  {item.skills && item.skills.length > 0 ? (
-                    <Text style={[typography.caption, { color: colors.primary, marginTop: 2 }]} numberOfLines={1}>
-                      {item.skills[0]}
+          {/* Recommended Mentors */}
+          {mentorsLoading ? (
+            <>
+              <SectionHeader style={styles.sectionHeader} title="Recommended Mentors" />
+              <View style={styles.mentorsList}>
+                <SkeletonMentorCard />
+                <SkeletonMentorCard />
+              </View>
+            </>
+          ) : mentors.length > 0 ? (
+            <>
+              <SectionHeader style={styles.sectionHeader} title="Recommended Mentors" />
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={mentors}
+                keyExtractor={(m) => m.id ?? m._id ?? Math.random().toString()}
+                contentContainerStyle={styles.mentorsList}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() =>
+                      navigation.navigate("MentorDetail", {
+                        username: item.username,
+                        mentor: item,
+                      })
+                    }
+                    style={({ pressed }) => [
+                      styles.mentorCard,
+                      getShadow(colors, "sm"),
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                        opacity: pressed ? 0.95 : 1,
+                      },
+                    ]}
+                  >
+                    <Avatar uri={item.avatarUrl} name={item.name} size={48} online />
+                    <Text style={[typography.bodyMedium, { color: colors.text, marginTop: spacing.sm }]} numberOfLines={1}>
+                      {item.name}
                     </Text>
-                  ) : null}
-                  <View style={styles.mentorRating}>
-                    {item.rating ? (
-                      <Text style={[typography.small, { color: colors.warning }]}>
-                        ⭐ {item.rating.toFixed(1)}
+                    {item.skills && item.skills.length > 0 ? (
+                      <Text style={[typography.caption, { color: colors.primary, marginTop: 2 }]} numberOfLines={1}>
+                        {item.skills[0]}
                       </Text>
-                    ) : (
-                      <Text style={[typography.small, { color: colors.textMuted }]}>New</Text>
-                    )}
+                    ) : null}
+                    <View style={styles.mentorRating}>
+                      {item.rating ? (
+                        <Text style={[typography.small, { color: colors.warning }]}>
+                          ⭐ {item.rating.toFixed(1)}
+                        </Text>
+                      ) : (
+                        <Text style={[typography.small, { color: colors.textMuted }]}>New</Text>
+                      )}
                   </View>
                 </Pressable>
               )}
             />
-          </Animated.View>
+          </>
         ) : null}
 
         {/* Trending Skills */}
-        <Animated.View entering={FadeInDown.delay(400).duration(400)}>
-          <SectionHeader
-            title="Trending Skills"
-            action="See all"
-            onAction={() => navigation.getParent()?.navigate("ExploreTab")}
-          />
-          {isLoading ? (
-            <View>
-              <SkeletonCard />
-              <SkeletonCard style={{ marginTop: spacing.md }} />
-            </View>
-          ) : skills.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Feather name="layers" size={40} color={colors.textMuted} />
-              <Text style={[typography.bodyMedium, { color: colors.textMuted, marginTop: spacing.sm }]}>
-                No listings yet — be the first to teach something.
-              </Text>
-            </View>
-          ) : (
-            skills.slice(0, 5).map((skill, index) => (
-              <Animated.View
-                key={skill._id}
-                entering={FadeInDown.delay(50 + index * 60).duration(300)}
-              >
-                <Pressable
-                  onPress={() => navigation.navigate("SkillDetail", { skillId: skill._id })}
-                  style={({ pressed }) => ({ opacity: pressed ? 0.95 : 1 })}
-                >
-                  <SkillListItem skill={skill} />
-                </Pressable>
-              </Animated.View>
-            ))
-          )}
-        </Animated.View>
+        <SectionHeader
+          style={styles.sectionHeader}
+          title="Trending Skills"
+          action="See all"
+          onAction={() => navigation.getParent()?.navigate("ExploreTab")}
+        />
+        {isLoading ? (
+          <View>
+            <SkeletonCard />
+            <SkeletonCard style={{ marginTop: spacing.md }} />
+          </View>
+        ) : skills.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Feather name="layers" size={40} color={colors.textMuted} />
+            <Text style={[typography.bodyMedium, { color: colors.textMuted, marginTop: spacing.sm }]}>
+              No listings yet — be the first to teach something.
+            </Text>
+          </View>
+        ) : (
+          skills.slice(0, 5).map((skill) => (
+            <Pressable
+              key={skill._id}
+              onPress={() => navigation.navigate("SkillDetail", { skillId: skill._id })}
+              style={({ pressed }) => ({ opacity: pressed ? 0.95 : 1 })}
+            >
+              <SkillListItem skill={skill} />
+            </Pressable>
+          ))
+        )}
 
         {/* Suggested for You */}
         {suggestionsLoading ? (
-          <Animated.View entering={FadeInDown.delay(500).duration(400)}>
-            <SectionHeader title="Suggested for You" />
+          <>
+            <SectionHeader style={styles.sectionHeader} title="Suggested for You" />
             <View>
               <SkeletonCard />
               <SkeletonCard style={{ marginTop: spacing.md }} />
             </View>
-          </Animated.View>
+          </>
         ) : suggestedSkills.length > 0 ? (
-          <Animated.View entering={FadeInDown.delay(500).duration(400)}>
-            <SectionHeader title="Suggested for You" />
-            {suggestedSkills.slice(0, 3).map((skill, index) => (
-              <Animated.View
+          <>
+            <SectionHeader style={styles.sectionHeader} title="Suggested for You" />
+            {suggestedSkills.slice(0, 3).map((skill) => (
+              <Pressable
                 key={skill._id}
-                entering={FadeInDown.delay(60 + index * 70).duration(300)}
+                onPress={() => navigation.navigate("SkillDetail", { skillId: skill._id })}
+                style={({ pressed }) => ({ opacity: pressed ? 0.95 : 1 })}
               >
-                <Pressable
-                  onPress={() => navigation.navigate("SkillDetail", { skillId: skill._id })}
-                  style={({ pressed }) => ({ opacity: pressed ? 0.95 : 1 })}
-                >
-                  <SkillListItem skill={skill} />
-                </Pressable>
-              </Animated.View>
+                <SkillListItem skill={skill} />
+              </Pressable>
             ))}
-          </Animated.View>
+          </>
         ) : null}
 
         <View style={{ height: spacing.xxl }} />
       </ScrollView>
+      </Animated.View>
     </View>
   );
 }
@@ -417,7 +408,6 @@ const styles = StyleSheet.create({
   heroEyebrow: {
     ...typography.caption,
     color: "rgba(255,255,255,0.76)",
-    textTransform: "uppercase",
     letterSpacing: 1,
     fontWeight: "800",
   },
@@ -467,7 +457,6 @@ const styles = StyleSheet.create({
   miniStatLabel: {
     ...typography.tiny,
     color: "rgba(255,255,255,0.72)",
-    textTransform: "uppercase",
   },
   heroSearchWrap: {
     flexDirection: "row",
@@ -532,6 +521,9 @@ const styles = StyleSheet.create({
   },
 
   // Categories
+  sectionHeader: {
+    paddingHorizontal: spacing.lg,
+  },
   categoriesList: {
     paddingRight: spacing.lg,
     gap: spacing.sm,

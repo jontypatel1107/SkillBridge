@@ -2,12 +2,13 @@ import React, { useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, FadeInDown } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { gradients } from "@/theme/gradients";
 import { Button } from "@/components/Button";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { HomeStackParamList } from "@/navigation/types";
 import type { CompositeScreenProps } from "@react-navigation/native";
@@ -40,51 +41,57 @@ export function BookingSuccessScreen({ navigation }: Props) {
   }));
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Animated.View style={[styles.iconCircle, circleStyle]}>
-        <LinearGradient
-          colors={gradients.success.colors as any}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        >
-          <Animated.View style={checkStyle}>
-            <Feather name="check" size={48} color="#FFFFFF" />
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <View style={styles.container}>
+          <Animated.View style={[styles.iconCircle, circleStyle]}>
+            <LinearGradient
+              colors={gradients.success.colors as any}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.gradient}
+            >
+              <Animated.View style={checkStyle}>
+                <Feather name="check" size={48} color="#FFFFFF" />
+              </Animated.View>
+            </LinearGradient>
           </Animated.View>
-        </LinearGradient>
-      </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(600).duration(400)}>
-        <Text style={[typography.h1, { color: colors.text, textAlign: "center", marginTop: spacing.xl }]}>
-          Booking Confirmed!
-        </Text>
-        <Text
-          style={[
-            typography.body,
-            { color: colors.textMuted, textAlign: "center", marginTop: spacing.md, lineHeight: 24 },
-          ]}
-        >
-          Your session has been requested.{"\n"}The mentor will confirm shortly.
-        </Text>
-      </Animated.View>
+          <View>
+            <Text style={[typography.h1, { color: colors.text, textAlign: "center", marginTop: spacing.xl }]}>
+              Booking Confirmed!
+            </Text>
+            <Text
+              style={[
+                typography.body,
+                { color: colors.textMuted, textAlign: "center", marginTop: spacing.md, lineHeight: 24 },
+              ]}
+            >
+              Your session has been requested.{"\n"}The mentor will confirm shortly.
+            </Text>
+          </View>
 
-      <Animated.View entering={FadeInDown.delay(800).duration(400)} style={styles.actions}>
-        <Button
-          label="View My Bookings"
-          onPress={() => navigation.getParent()?.navigate("BookingsTab")}
-        />
-        <Button
-          label="Back to Home"
-          variant="secondary"
-          onPress={() => navigation.getParent()?.navigate("HomeTab")}
-          style={{ marginTop: spacing.md }}
-        />
+          <View style={styles.actions}>
+            <Button
+              label="View My Bookings"
+              onPress={() => navigation.getParent()?.navigate("BookingsTab")}
+            />
+            <Button
+              label="Back to Home"
+              variant="secondary"
+              onPress={() => navigation.getParent()?.navigate("HomeTab")}
+              style={{ marginTop: spacing.md }}
+            />
+          </View>
+        </View>
       </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: {
     flex: 1,
     alignItems: "center",

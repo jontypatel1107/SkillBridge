@@ -7,7 +7,7 @@ import {
   Pressable,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,6 +17,7 @@ import { getShadow } from "@/theme/shadows";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
 import { Chip } from "@/components/Chip";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useUpdateProfileMutation } from "@/redux/api/userApi";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { updateUser } from "@/redux/slices/authSlice";
@@ -128,15 +129,17 @@ export function EditProfileScreen({ navigation }: Props) {
     error && "data" in error ? (error.data as { message?: string })?.message : undefined;
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-    >
-      {/* Form */}
-      <Animated.View entering={FadeInDown.duration(400)}>
-        <View style={[styles.formCard, getShadow(colors, "sm"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View style={styles.flex}>
+      <ScreenBackground mood="profile" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Form */}
+        <View>
+          <View style={[styles.formCard, getShadow(colors, "sm"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Controller
             control={control}
             name="name"
@@ -170,10 +173,10 @@ export function EditProfileScreen({ navigation }: Props) {
             )}
           />
         </View>
-      </Animated.View>
+      </View>
 
       {/* Skills */}
-      <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+      <View>
         <Text style={[typography.h4, { color: colors.text, marginTop: spacing.xl, marginBottom: spacing.sm }]}>
           Skills
         </Text>
@@ -214,10 +217,10 @@ export function EditProfileScreen({ navigation }: Props) {
             />
           ))}
         </View>
-      </Animated.View>
+      </View>
 
       {/* Interests */}
-      <Animated.View entering={FadeInDown.delay(150).duration(400)}>
+      <View>
         <Text style={[typography.h4, { color: colors.text, marginTop: spacing.xl, marginBottom: spacing.sm }]}>
           Interests
         </Text>
@@ -258,10 +261,10 @@ export function EditProfileScreen({ navigation }: Props) {
             />
           ))}
         </View>
-      </Animated.View>
+      </View>
 
       {/* Languages */}
-      <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+      <View>
         <Text style={[typography.h4, { color: colors.text, marginTop: spacing.xl, marginBottom: spacing.sm }]}>
           Languages
         </Text>
@@ -299,10 +302,10 @@ export function EditProfileScreen({ navigation }: Props) {
             />
           ))}
         </View>
-      </Animated.View>
+      </View>
 
       {/* Location */}
-      <Animated.View entering={FadeInDown.delay(220).duration(400)}>
+      <View>
         <Text style={[typography.h3, { color: colors.text, marginTop: spacing.xl, marginBottom: spacing.md }]}>
           Home Location
         </Text>
@@ -335,7 +338,7 @@ export function EditProfileScreen({ navigation }: Props) {
             />
           </View>
         ) : null}
-      </Animated.View>
+      </View>
 
       {/* Error */}
       {serverError ? (
@@ -348,7 +351,7 @@ export function EditProfileScreen({ navigation }: Props) {
       ) : null}
 
       {/* Save */}
-      <Animated.View entering={FadeInDown.delay(250).duration(400)}>
+      <View>
         <Button
           label="Save Changes"
           onPress={handleSubmit(onSubmit)}
@@ -356,14 +359,17 @@ export function EditProfileScreen({ navigation }: Props) {
           icon={!isLoading ? <Feather name="check" size={18} color="#FFFFFF" /> : undefined}
           style={{ marginTop: spacing.xl }}
         />
-      </Animated.View>
+      </View>
 
       <View style={{ height: spacing.xxl }} />
-    </ScrollView>
+      </ScrollView>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
 
   formCard: {

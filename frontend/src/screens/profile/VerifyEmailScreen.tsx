@@ -8,10 +8,11 @@ import {
   Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { Button } from "@/components/Button";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useVerifyEmailMutation, useConfirmEmailMutation } from "@/redux/api/authApi";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { updateUser } from "@/redux/slices/authSlice";
@@ -75,90 +76,95 @@ export function VerifyEmailScreen({ navigation }: Props) {
     error && "data" in error ? (error.data as { message?: string })?.message : undefined;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={[styles.flex, { backgroundColor: colors.background }]}
-    >
-      <View style={styles.content}>
-        <Animated.View entering={FadeInDown.duration(400)}>
-          <View style={[styles.iconWrap, { backgroundColor: colors.primaryMuted }]}>
-            <Feather name="shield" size={32} color={colors.primary} />
-          </View>
-          <Text style={[typography.h2, { color: colors.text, marginTop: spacing.xl, textAlign: "center" }]}>
-            Verify your email
-          </Text>
-          <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" }]}>
-            {user?.email}
-          </Text>
-        </Animated.View>
-
-        {!sent ? (
-          <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.section}>
-            <Text style={[typography.body, { color: colors.textMuted, textAlign: "center" }]}>
-              We'll send a 6-digit verification code to your email address.
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.flex}
+      >
+        <View style={styles.content}>
+          <View>
+            <View style={[styles.iconWrap, { backgroundColor: colors.primaryMuted }]}>
+              <Feather name="shield" size={32} color={colors.primary} />
+            </View>
+            <Text style={[typography.h2, { color: colors.text, marginTop: spacing.xl, textAlign: "center" }]}>
+              Verify your email
             </Text>
-            <Button
-              label="Send Verification Code"
-              onPress={handleSendOtp}
-              loading={isSending}
-              style={{ marginTop: spacing.xl }}
-            />
-          </Animated.View>
-        ) : (
-          <>
-            <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.otpRow}>
-              {code.map((digit, i) => (
-                <TextInput
-                  key={i}
-                  ref={(ref) => { inputs.current[i] = ref; }}
-                  style={[
-                    styles.otpBox,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: digit ? colors.primary : colors.border,
-                      color: colors.text,
-                    },
-                  ]}
-                  value={digit}
-                  onChangeText={(t) => handleChange(t, i)}
-                  onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, i)}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  selectTextOnFocus
-                />
-              ))}
-            </Animated.View>
+            <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" }]}>
+              {user?.email}
+            </Text>
+          </View>
 
-            {serverError ? (
-              <Animated.View entering={FadeInDown.delay(150).duration(300)} style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
-                <Feather name="alert-circle" size={16} color={colors.danger} />
-                <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
-                  {serverError}
-                </Text>
-              </Animated.View>
-            ) : null}
-
-            <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+          {!sent ? (
+            <View style={styles.section}>
+              <Text style={[typography.body, { color: colors.textMuted, textAlign: "center" }]}>
+                We'll send a 6-digit verification code to your email address.
+              </Text>
               <Button
-                label="Verify Email"
-                onPress={handleConfirm}
-                loading={isConfirming}
-                disabled={code.join("").length !== OTP_LENGTH}
-              />
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(250).duration(400)}>
-              <Button
-                label={isSending ? "Sending..." : "Resend Code"}
-                variant="ghost"
+                label="Send Verification Code"
                 onPress={handleSendOtp}
-                disabled={isSending}
+                loading={isSending}
+                style={{ marginTop: spacing.xl }}
               />
-            </Animated.View>
-          </>
-        )}
-      </View>
-    </KeyboardAvoidingView>
+            </View>
+          ) : (
+            <>
+              <View style={styles.otpRow}>
+                {code.map((digit, i) => (
+                  <TextInput
+                    key={i}
+                    ref={(ref) => { inputs.current[i] = ref; }}
+                    style={[
+                      styles.otpBox,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: digit ? colors.primary : colors.border,
+                        color: colors.text,
+                      },
+                    ]}
+                    value={digit}
+                    onChangeText={(t) => handleChange(t, i)}
+                    onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, i)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    selectTextOnFocus
+                  />
+                ))}
+              </View>
+
+              {serverError ? (
+                <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
+                  <Feather name="alert-circle" size={16} color={colors.danger} />
+                  <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
+                    {serverError}
+                  </Text>
+                </View>
+              ) : null}
+
+              <View>
+                <Button
+                  label="Verify Email"
+                  onPress={handleConfirm}
+                  loading={isConfirming}
+                  disabled={code.join("").length !== OTP_LENGTH}
+                />
+              </View>
+
+              <View>
+                <Button
+                  label={isSending ? "Sending..." : "Resend Code"}
+                  variant="ghost"
+                  onPress={handleSendOtp}
+                  disabled={isSending}
+                />
+              </View>
+            </>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 }
 

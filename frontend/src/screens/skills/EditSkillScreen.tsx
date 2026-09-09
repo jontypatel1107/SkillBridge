@@ -7,7 +7,7 @@ import {
   Pressable,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,6 +17,7 @@ import { getShadow } from "@/theme/shadows";
 import { categoryGradients } from "@/theme/gradients";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { SkeletonCard } from "@/components/Skeleton";
 import { useGetSkillQuery, useUpdateSkillMutation } from "@/redux/api/skillsApi";
 import { SkillCategory } from "@/types";
@@ -84,7 +85,8 @@ export function EditSkillScreen({ route, navigation }: Props) {
 
   if (loadingSkill) {
     return (
-      <View style={[styles.flex, { backgroundColor: colors.background }]}>
+      <View style={styles.flex}>
+        <ScreenBackground mood="chat" />
         <View style={styles.listContent}>
           <SkeletonCard />
         </View>
@@ -93,133 +95,137 @@ export function EditSkillScreen({ route, navigation }: Props) {
   }
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-    >
-      {/* Form */}
-      <Animated.View entering={FadeInDown.duration(400)}>
-        <View style={[styles.formCard, getShadow(colors, "sm"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Controller
-            control={control}
-            name="title"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextField
-                label="Skill title"
-                placeholder="e.g. React Native for Beginners"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                error={errors.title?.message}
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Form */}
+          <View>
+            <View style={[styles.formCard, getShadow(colors, "sm"), { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Controller
+                control={control}
+                name="title"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextField
+                    label="Skill title"
+                    placeholder="e.g. React Native for Beginners"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    error={errors.title?.message}
+                  />
+                )}
               />
-            )}
-          />
 
-          <Controller
-            control={control}
-            name="description"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextField
-                label="Description"
-                placeholder="What will learners get out of this?"
-                multiline
-                numberOfLines={4}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                error={errors.description?.message}
-                style={{ height: 110, textAlignVertical: "top", paddingTop: spacing.md }}
+              <Controller
+                control={control}
+                name="description"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextField
+                    label="Description"
+                    placeholder="What will learners get out of this?"
+                    multiline
+                    numberOfLines={4}
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    error={errors.description?.message}
+                    style={{ height: 110, textAlignVertical: "top", paddingTop: spacing.md }}
+                  />
+                )}
               />
-            )}
-          />
 
-          <Controller
-            control={control}
-            name="hourlyPrice"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextField
-                label="Hourly price ($)"
-                placeholder="0 for free sessions"
-                keyboardType="numeric"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value !== undefined ? String(value) : ""}
-                error={errors.hourlyPrice?.message}
+              <Controller
+                control={control}
+                name="hourlyPrice"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextField
+                    label="Hourly price ($)"
+                    placeholder="0 for free sessions"
+                    keyboardType="numeric"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value !== undefined ? String(value) : ""}
+                    error={errors.hourlyPrice?.message}
+                  />
+                )}
               />
-            )}
-          />
-        </View>
+            </View>
+          </View>
+
+          {/* Category Picker */}
+          <View>
+            <Text style={[typography.h4, { color: colors.text, marginTop: spacing.xl, marginBottom: spacing.md }]}>
+              Category
+            </Text>
+            <View style={styles.categoryGrid}>
+              {CATEGORIES.map((c) => {
+                const isActive = category === c.key;
+                const grad = categoryGradients[c.key] ?? categoryGradients.development;
+                return (
+                  <Pressable
+                    key={c.key}
+                    onPress={() => setCategory(c.key)}
+                    style={[
+                      styles.categoryItem,
+                      getShadow(colors, isActive ? "md" : "sm"),
+                      {
+                        backgroundColor: isActive ? grad.colors[0] + "18" : colors.surface,
+                        borderColor: isActive ? grad.colors[0] : colors.border,
+                      },
+                    ]}
+                  >
+                    <Feather
+                      name={c.icon as any}
+                      size={20}
+                      color={isActive ? grad.colors[0] : colors.textMuted}
+                    />
+                    <Text
+                      style={[
+                        typography.caption,
+                        {
+                          color: isActive ? grad.colors[0] : colors.textMuted,
+                          textTransform: "capitalize",
+                          marginTop: 4,
+                        },
+                      ]}
+                    >
+                      {c.key}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Error */}
+          {serverError ? (
+            <View style={[styles.errorBox, { backgroundColor: colors.danger + "12", borderColor: colors.danger + "30" }]}>
+              <Feather name="alert-circle" size={16} color={colors.danger} />
+              <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
+                {serverError}
+              </Text>
+            </View>
+          ) : null}
+
+          <View>
+            <Button
+              label="Save Changes"
+              onPress={handleSubmit(onSubmit)}
+              loading={isLoading}
+              icon={!isLoading ? <Feather name="check" size={18} color="#FFFFFF" /> : undefined}
+              style={{ marginTop: spacing.xl }}
+            />
+          </View>
+
+          <View style={{ height: spacing.xxl }} />
+        </ScrollView>
       </Animated.View>
-
-      {/* Category Picker */}
-      <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-        <Text style={[typography.h4, { color: colors.text, marginTop: spacing.xl, marginBottom: spacing.md }]}>
-          Category
-        </Text>
-        <View style={styles.categoryGrid}>
-          {CATEGORIES.map((c) => {
-            const isActive = category === c.key;
-            const grad = categoryGradients[c.key] ?? categoryGradients.development;
-            return (
-              <Pressable
-                key={c.key}
-                onPress={() => setCategory(c.key)}
-                style={[
-                  styles.categoryItem,
-                  getShadow(colors, isActive ? "md" : "sm"),
-                  {
-                    backgroundColor: isActive ? grad.colors[0] + "18" : colors.surface,
-                    borderColor: isActive ? grad.colors[0] : colors.border,
-                  },
-                ]}
-              >
-                <Feather
-                  name={c.icon as any}
-                  size={20}
-                  color={isActive ? grad.colors[0] : colors.textMuted}
-                />
-                <Text
-                  style={[
-                    typography.caption,
-                    {
-                      color: isActive ? grad.colors[0] : colors.textMuted,
-                      textTransform: "capitalize",
-                      marginTop: 4,
-                    },
-                  ]}
-                >
-                  {c.key}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </Animated.View>
-
-      {/* Error */}
-      {serverError ? (
-        <View style={[styles.errorBox, { backgroundColor: colors.danger + "12", borderColor: colors.danger + "30" }]}>
-          <Feather name="alert-circle" size={16} color={colors.danger} />
-          <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
-            {serverError}
-          </Text>
-        </View>
-      ) : null}
-
-      <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-        <Button
-          label="Save Changes"
-          onPress={handleSubmit(onSubmit)}
-          loading={isLoading}
-          icon={!isLoading ? <Feather name="check" size={18} color="#FFFFFF" /> : undefined}
-          style={{ marginTop: spacing.xl }}
-        />
-      </Animated.View>
-
-      <View style={{ height: spacing.xxl }} />
-    </ScrollView>
+    </View>
   );
 }
 

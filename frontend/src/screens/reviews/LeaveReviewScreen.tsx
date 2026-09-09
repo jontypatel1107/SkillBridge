@@ -9,12 +9,13 @@ import {
   Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, withSequence } from "react-native-reanimated";
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring, withSequence } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography, radii } from "@/theme/tokens";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useCreateReviewMutation } from "@/redux/api/reviewsApi";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { BookingsStackParamList } from "@/navigation/types";
@@ -55,75 +56,80 @@ export function LeaveReviewScreen({ route, navigation }: Props) {
     error && "data" in error ? (error.data as { message?: string })?.message : undefined;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={[{ flex: 1, backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
+      <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.flex}
       >
-        {/* Header */}
-        <Animated.View entering={FadeInDown.duration(400)}>
-          <View style={styles.headerSection}>
-            <Feather name="star" size={40} color={colors.warning} />
-            <Text style={[typography.h2, { color: colors.text, marginTop: spacing.md }]}>
-              Rate your session
-            </Text>
-            <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs }]}>
-              How was your learning experience?
+        <ScrollView
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
+          <View>
+            <View style={styles.headerSection}>
+              <Feather name="star" size={40} color={colors.warning} />
+              <Text style={[typography.h2, { color: colors.text, marginTop: spacing.md }]}>
+                Rate your session
+              </Text>
+              <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.xs }]}>
+                How was your learning experience?
+              </Text>
+            </View>
+          </View>
+
+          {/* Stars */}
+          <View>
+            <View style={styles.starsContainer}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <StarButton
+                  key={n}
+                  active={n <= rating}
+                  onPress={() => handleRating(n)}
+                />
+              ))}
+            </View>
+            <Text style={[typography.bodyMedium, { color: colors.primary, textAlign: "center", marginTop: spacing.sm }]}>
+              {RATING_LABELS[rating] ?? ""}
             </Text>
           </View>
-        </Animated.View>
 
-        {/* Stars */}
-        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <View style={styles.starsContainer}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <StarButton
-                key={n}
-                active={n <= rating}
-                onPress={() => handleRating(n)}
-              />
-            ))}
+          {/* Comment */}
+          <View style={{ marginTop: spacing.xl }}>
+            <TextField
+              label="Your review (optional)"
+              placeholder="Share details about your experience..."
+              multiline
+              numberOfLines={4}
+              value={comment}
+              onChangeText={setComment}
+              style={styles.textArea}
+            />
           </View>
-          <Text style={[typography.bodyMedium, { color: colors.primary, textAlign: "center", marginTop: spacing.sm }]}>
-            {RATING_LABELS[rating] ?? ""}
-          </Text>
-        </Animated.View>
 
-        {/* Comment */}
-        <Animated.View entering={FadeInDown.delay(200).duration(400)} style={{ marginTop: spacing.xl }}>
-          <TextField
-            label="Your review (optional)"
-            placeholder="Share details about your experience..."
-            multiline
-            numberOfLines={4}
-            value={comment}
-            onChangeText={setComment}
-            style={styles.textArea}
+          {/* Error */}
+          {serverError ? (
+            <View style={[styles.errorBox, { backgroundColor: colors.danger + "12", borderColor: colors.danger + "30" }]}>
+              <Feather name="alert-circle" size={16} color={colors.danger} />
+              <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
+                {serverError}
+              </Text>
+            </View>
+          ) : null}
+
+          <Button
+            label="Submit Review"
+            onPress={onSubmit}
+            loading={isLoading}
+            style={styles.submitButton}
           />
-        </Animated.View>
-
-        {/* Error */}
-        {serverError ? (
-          <View style={[styles.errorBox, { backgroundColor: colors.danger + "12", borderColor: colors.danger + "30" }]}>
-            <Feather name="alert-circle" size={16} color={colors.danger} />
-            <Text style={[typography.caption, { color: colors.danger, marginLeft: spacing.sm, flex: 1 }]}>
-              {serverError}
-            </Text>
-          </View>
-        ) : null}
-
-        <Button
-          label="Submit Review"
-          onPress={onSubmit}
-          loading={isLoading}
-          style={styles.submitButton}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -161,6 +167,7 @@ function StarButton({ active, onPress }: { active: boolean; onPress: () => void 
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: {
     flexGrow: 1,
     padding: spacing.lg,

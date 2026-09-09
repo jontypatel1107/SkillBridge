@@ -30,12 +30,6 @@ const ICONS: Record<ToastType, keyof typeof Feather.glyphMap> = {
   info: "info",
 };
 
-const BG: Record<ToastType, string> = {
-  success: "#10B981",
-  error: "#EF4444",
-  info: "#3B82F6",
-};
-
 let toastId = 0;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -66,6 +60,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () => void }) {
   const { colors } = useTheme();
   const opacity = useRef(new Animated.Value(0)).current;
+  const bg = toast.type === "success" ? colors.success : toast.type === "error" ? colors.danger : colors.primary;
 
   useEffect(() => {
     Animated.sequence([
@@ -79,7 +74,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () =>
     <Animated.View
       style={[
         styles.toast,
-        { backgroundColor: BG[toast.type], opacity },
+        { backgroundColor: bg, opacity },
         getShadow(colors, "lg"),
       ]}
       accessibilityRole="alert"

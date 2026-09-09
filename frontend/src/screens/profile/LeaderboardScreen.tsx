@@ -7,13 +7,14 @@ import {
   RefreshControl,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing, typography } from "@/theme/tokens";
 import { Avatar } from "@/components/Avatar";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { SkeletonCard } from "@/components/Skeleton";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useGetLeaderboardQuery, LeaderboardEntry } from "@/redux/api/userApi";
 
 const MEDAL_COLORS = ["#F59E0B", "#94A3B8", "#B45309"];
@@ -35,7 +36,8 @@ export function LeaderboardScreen() {
   const users = data ?? [];
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
+    <View style={styles.flex}>
+      <ScreenBackground mood="chat" />
       {isLoading ? (
         <View style={styles.listContent}>
           <SkeletonCard />
@@ -43,30 +45,32 @@ export function LeaderboardScreen() {
           <SkeletonCard style={{ marginTop: spacing.md }} />
         </View>
       ) : (
-        <FlatList
-          data={users}
-          keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing || (isFetching && !isLoading)}
-              onRefresh={onRefresh}
-            />
-          }
-          ListEmptyComponent={
-            <EmptyState
-              icon="🏆"
-              title="No rankings yet"
-              subtitle="Complete sessions and earn XP to climb the leaderboard."
-            />
-          }
-          renderItem={({ item, index }) => (
-            <Animated.View entering={FadeInDown.delay(index * 30).duration(300)}>
-              <LeaderboardRow item={item} rank={index + 1} />
-            </Animated.View>
-          )}
-        />
+        <Animated.View entering={FadeIn.duration(400)} style={styles.flex}>
+          <FlatList
+            data={users}
+            keyExtractor={(item) => item._id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing || (isFetching && !isLoading)}
+                onRefresh={onRefresh}
+              />
+            }
+            ListEmptyComponent={
+              <EmptyState
+                icon="🏆"
+                title="No rankings yet"
+                subtitle="Complete sessions and earn XP to climb the leaderboard."
+              />
+            }
+            renderItem={({ item, index }) => (
+              <View>
+                <LeaderboardRow item={item} rank={index + 1} />
+              </View>
+            )}
+          />
+        </Animated.View>
       )}
     </View>
   );
